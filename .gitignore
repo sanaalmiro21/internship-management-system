@@ -9,3 +9,7 @@ venv/
 
 # Environment variables
 .env
+
+#other
+*.db
+instance/

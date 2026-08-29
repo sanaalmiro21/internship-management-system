@@ -19,15 +19,29 @@ class User(db.Model):
     admin_profile = db.relationship("Admin", backref="user", uselist=False, cascade="all, delete-orphan")
 
 
+class University(db.Model):
+    __tablename__ = "universities"
+
+    university_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), primary_key=True)
+    university_name = db.Column(db.String(150), nullable=False)
+    department = db.Column(db.String(100), nullable=True)
+
+    # Relationships
+    students = db.relationship("Student", backref="university", lazy=True)
+    supervisors = db.relationship("UniversitySupervisor", backref="university", lazy=True)
+
+
 class Student(db.Model):
     __tablename__ = "students"
 
     student_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), primary_key=True)
+    university_id = db.Column(db.Integer, db.ForeignKey("universities.university_id"), nullable=False)
     student_number = db.Column(db.String(30), unique=True, nullable=False)
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=False)
     department = db.Column(db.String(100), nullable=False)
 
+    # Relationships
     applications = db.relationship("Application", backref="student", lazy=True)
     internships = db.relationship("Internship", backref="student", lazy=True)
 
@@ -42,16 +56,6 @@ class Company(db.Model):
 
     instructors = db.relationship("CompanyInstructor", backref="company", lazy=True)
     applications = db.relationship("Application", backref="company", lazy=True)
-
-
-class University(db.Model):
-    __tablename__ = "universities"
-
-    university_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), primary_key=True)
-    university_name = db.Column(db.String(150), nullable=False)
-    department = db.Column(db.String(100), nullable=True)
-
-    supervisors = db.relationship("UniversitySupervisor", backref="university", lazy=True)
 
 
 class Admin(db.Model):

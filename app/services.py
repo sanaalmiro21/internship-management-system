@@ -5,22 +5,27 @@ from .models import User, Student, Company, Application, Internship, Evaluation,
 # --- Authentication Services ---
 
 def register_user(username, email, password, role):
-    """Create a new user with securely hashed password."""
-    # Check if username or email is already taken
+    # Check if user already exists
     existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
     if existing_user:
-        return None, "Username or Email already registered."
+        return None, "Username or email already exists."
 
-    hashed_pw = generate_password_hash(password, method="scrypt")
-    user = User(
+    hashed_password = generate_password_hash(password)
+    
+    # FIX: Companies and Universities must start unapproved (False)
+    is_approved_status = True if role == 'Student' else False
+
+    new_user = User(
         username=username,
         email=email,
-        password=hashed_pw,
-        role=role.lower()
+        password=hashed_password,
+        role=role,
+        is_approved=is_approved_status
     )
-    db.session.add(user)
+    
+    db.session.add(new_user)
     db.session.commit()
-    return user, "User registered successfully."
+    return new_user, "Registration successful."
 
 def authenticate_user(email, password):
     """Verify user credentials against stored password hash."""

@@ -1,10 +1,119 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Internship Management System</title>
-</head>
-<body>
-    <h1>Internship Management System</h1>
-    <p>Flask project setup is working!</p>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}Home — IMS{% endblock %}
+
+{% block content %}
+<!-- Top Cream Hero Section -->
+<section class="hero-split">
+    <div class="hero-text">
+        <h1>The Internship Ecosystem, Simplified</h1>
+        <p>A single platform where students launch their careers, companies discover top talent, and universities manage placements effortlessly.</p>
+        
+        {% if not session.get('user_id') %}
+            <a href="{{ url_for('main.register') }}" class="btn btn-primary">Join the Network</a>
+        {% else %}
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+        {% endif %}
+    </div>
+    
+    <div class="hero-illustration">
+        <!-- You can insert an SVG or image here later -->
+       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" width="100%" height="100%">
+    <!-- Abstract Base -->
+    <path d="M0 250 Q 150 150 300 250 T 600 200 L 600 400 L 0 400 Z" fill="#17263A" opacity="0.7"/>
+    
+    <!-- Network Connections -->
+    <g stroke="#C29A53" stroke-width="2.5" fill="none" opacity="0.8">
+        <line x1="150" y1="180" x2="250" y2="120" />
+        <line x1="250" y1="120" x2="380" y2="150" />
+        <line x1="380" y1="150" x2="480" y2="100" />
+        <line x1="250" y1="120" x2="300" y2="220" />
+        <line x1="380" y1="150" x2="450" y2="250" />
+        <line x1="150" y1="180" x2="100" y2="280" />
+        <line x1="300" y1="220" x2="450" y2="250" />
+    </g>
+    
+    <!-- Network Nodes -->
+    <g fill="#F5F3E9">
+        <circle cx="150" cy="180" r="6" />
+        <circle cx="250" cy="120" r="8" />
+        <circle cx="380" cy="150" r="10" fill="#C29A53" />
+        <circle cx="480" cy="100" r="6" />
+        <circle cx="300" cy="220" r="8" />
+        <circle cx="450" cy="250" r="7" />
+        <circle cx="100" cy="280" r="5" />
+    </g>
+
+    <!-- UI Card: The Application / Logbook -->
+    <g transform="translate(160, 140)">
+        <rect x="0" y="0" width="90" height="110" rx="8" fill="#F5F3E9" box-shadow="0 10px 20px rgba(0,0,0,0.5)" />
+        <rect x="15" y="20" width="60" height="8" rx="4" fill="#17263A" />
+        <rect x="15" y="40" width="40" height="6" rx="3" fill="#C29A53" />
+        <rect x="15" y="55" width="50" height="6" rx="3" fill="#A0B0C4" opacity="0.6" />
+        <rect x="15" y="70" width="45" height="6" rx="3" fill="#A0B0C4" opacity="0.6" />
+        <path d="M 60 85 L 65 90 L 75 78" stroke="#C29A53" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </g>
+
+    <!-- Element 1: University (Graduation Cap) -->
+    <g transform="translate(320, 70)">
+        <path d="M 0 30 L 50 10 L 100 30 L 50 50 Z" fill="#F5F3E9" />
+        <path d="M 20 38 L 20 60 Q 50 75 80 60 L 80 38 L 50 50 Z" fill="#C29A53" />
+        <line x1="95" y1="28" x2="95" y2="55" stroke="#F5F3E9" stroke-width="3" />
+        <circle cx="95" cy="55" r="4" fill="#C29A53" />
+    </g>
+
+    <!-- Element 2: Company (Briefcase) -->
+    <g transform="translate(400, 200)">
+        <rect x="0" y="20" width="80" height="55" rx="6" fill="#F5F3E9" />
+        <rect x="25" y="8" width="30" height="12" rx="4" fill="none" stroke="#F5F3E9" stroke-width="4" />
+        <line x1="0" y1="40" x2="80" y2="40" stroke="#17263A" stroke-width="3" opacity="0.15"/>
+        <rect x="35" y="35" width="10" height="10" rx="2" fill="#C29A53" />
+    </g>
+
+    <!-- Decorative Stars & Accents -->
+    <path d="M 60 70 L 70 60 M 70 70 L 60 60" stroke="#C29A53" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 520 280 L 530 270 M 530 280 L 520 270" stroke="#F5F3E9" stroke-width="3" fill="none" stroke-linecap="round"/>
+    
+    <circle cx="90" cy="110" r="4" fill="#C29A53" opacity="0.6"/>
+    <circle cx="510" cy="160" r="5" fill="#F5F3E9" opacity="0.4"/>
+    <circle cx="210" cy="330" r="3" fill="#C29A53" opacity="0.8"/>
+</svg>
+    </div>
+</section>
+
+<!-- Middle Navy Purpose Section -->
+<section class="purpose-section">
+    <div class="purpose-grid">
+        <h2>One Platform.<br>Three Roles.</h2>
+        <div class="purpose-text">
+            <p><strong>👨‍🎓 For Students:</strong> Ditch the endless searching. Browse verified open positions, apply with one click, and submit your weekly logbooks directly through the portal.</p>
+            <p><strong>🏢 Companies & 🏛️ Universities:</strong> Eliminate the paperwork. Companies can review applications and track intern progress, while university instructors easily monitor placements and submit final academic grades.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Bottom How It Works Section -->
+<section class="how-it-works">
+    <h2>How It Works</h2>
+    
+    <div class="features-grid">
+        <div class="feature-step">
+            <div class="step-number">01</div>
+            <h3>Connect</h3>
+            <p>Students set up profiles and apply. Companies review applications and hire their ideal candidates.</p>
+        </div>
+        
+        <div class="feature-step">
+            <div class="step-number">02</div>
+            <h3>Manage</h3>
+            <p>Interns upload their weekly logbooks. Company supervisors review and approve them in real-time.</p>
+        </div>
+        
+        <div class="feature-step">
+            <div class="step-number">03</div>
+            <h3>Evaluate</h3>
+            <p>Universities access the complete record to finalize academic grading without chasing down lost paperwork.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}

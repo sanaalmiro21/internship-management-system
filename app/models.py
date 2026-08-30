@@ -11,7 +11,7 @@ class User(db.Model):
     password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(20), nullable=False)  # student, company, university, admin
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-
+    is_approved = db.Column(db.Boolean, default=False)
     # Subtype Relationships
     student_profile = db.relationship("Student", backref="user", uselist=False, cascade="all, delete-orphan")
     company_profile = db.relationship("Company", backref="user", uselist=False, cascade="all, delete-orphan")

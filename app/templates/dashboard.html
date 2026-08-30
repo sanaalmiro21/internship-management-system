@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — IMS{% endblock %}
+
+{% block content %}
+<section class="dashboard-header">
+    <h1>Welcome, {{ username }}!</h1>
+    <span class="badge badge-role">{{ role|upper }} ACCOUNT</span>
+</section>
+
+<div class="dashboard-grid">
+    {% if role == 'student' %}
+        <div class="dashboard-card">
+            <h3>My Applications</h3>
+            <p>View submitted internship requests and check decision statuses.</p>
+            <a href="#" class="btn btn-secondary">View Applications</a>
+        </div>
+        <div class="dashboard-card">
+            <h3>Find Companies</h3>
+            <p>Explore partner companies and available internship openings.</p>
+            <a href="#" class="btn btn-secondary">Browse Listings</a>
+        </div>
+        <div class="dashboard-card">
+            <h3>Documents & Logs</h3>
+            <p>Upload insurance paperwork and weekly logbook reports.</p>
+            <a href="#" class="btn btn-secondary">Manage Documents</a>
+        </div>
+    {% elif role == 'company' %}
+        <div class="dashboard-card">
+            <h3>Incoming Applications</h3>
+            <p>Review candidate resumes, accept applicants, or request updates.</p>
+            <a href="#" class="btn btn-secondary">Review Applicants</a>
+        </div>
+        <div class="dashboard-card">
+            <h3>Intern Evaluations</h3>
+            <p>Submit mid-term and final performance scores for interns.</p>
+            <a href="#" class="btn btn-secondary">Submit Scores</a>
+        </div>
+    {% elif role == 'university' %}
+        <div class="dashboard-card">
+            <h3>Student Placements</h3>
+            <p>Track active student internships across registered companies.</p>
+            <a href="#" class="btn btn-secondary">Monitor Students</a>
+        </div>
+        <div class="dashboard-card">
+            <h3>Supervisor Grading</h3>
+            <p>Review logbook documents and input academic evaluation scores.</p>
+            <a href="#" class="btn btn-secondary">Grade Internships</a>
+        </div>
+    {% else %}
+        <div class="dashboard-card">
+            <h3>System Management</h3>
+            <p>Admin control center for user accounts and institutional records.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

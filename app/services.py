@@ -1,5 +1,35 @@
-from app import db
-from app.models import User, Student, Company, Application, Internship, Evaluation, University
+from werkzeug.security import generate_password_hash, check_password_hash
+from . import db
+from .models import User, Student, Company, Application, Internship, Evaluation, University
+
+# --- Authentication Services ---
+
+def register_user(username, email, password, role):
+    """Create a new user with securely hashed password."""
+    # Check if username or email is already taken
+    existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+    if existing_user:
+        return None, "Username or Email already registered."
+
+    hashed_pw = generate_password_hash(password, method="scrypt")
+    user = User(
+        username=username,
+        email=email,
+        password=hashed_pw,
+        role=role.lower()
+    )
+    db.session.add(user)
+    db.session.commit()
+    return user, "User registered successfully."
+
+def authenticate_user(email, password):
+    """Verify user credentials against stored password hash."""
+    user = User.query.filter_by(email=email).first()
+    if user and check_password_hash(user.password, password):
+        return user
+    return None
+
+# --- Application & Query Services ---
 
 def get_student_by_user_id(user_id):
     """Retrieve student profile by user ID."""
@@ -10,7 +40,7 @@ def get_company_by_user_id(user_id):
     return Company.query.get(user_id)
 
 def get_all_companies():
-    """Retrieve list of all registered companies for students to apply to."""
+    """Retrieve list of all registered companies."""
     return Company.query.all()
 
 def get_student_applications(student_id):

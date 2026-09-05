@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Explore Internships — IMS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header-flex">
+        <div>
+            <h1 class="dashboard-title">Available Internship Opportunities</h1>
+            <p class="dashboard-subtitle">Browse verified positions posted by partner companies</p>
+        </div>
+        {% if session.get('role') == 'Student' %}
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary btn-nav-action">Back to Dashboard</a>
+        {% endif %}
+    </div>
+
+    <div class="listings-grid">
+        {% for item in listings %}
+        <div class="dashboard-card listing-card">
+            <div>
+                <div class="listing-card-header">
+                    <span class="listing-dept-tag">{{ item.department }}</span>
+                    <span class="listing-location-tag">{{ item.location }}</span>
+                </div>
+                <h3 class="listing-title">{{ item.title }}</h3>
+                <p class="listing-company-name">{{ item.company.company_name }}</p>
+                <p class="listing-description">
+                    {{ item.description[:140] }}{% if item.description|length > 140 %}...{% endif %}
+                </p>
+            </div>
+
+            <div class="card-footer-flex">
+                <span class="text-subtle">Posted {{ item.created_at.strftime('%b %d, %Y') }}</span>
+                {% if session.get('role') == 'Student' %}
+                    {% if has_active_placement %}
+                        <span class="status-badge status-badge-muted">Placed (Locked)</span>
+                    {% elif item.listing_id in applied_listing_ids %}
+                        <span class="status-badge status-badge-accepted">Applied</span>
+                    {% else %}
+                        <a href="{{ url_for('main.apply_internship', listing_id=item.listing_id) }}" class="btn btn-primary btn-sm">Apply Now</a>
+                    {% endif %}
+                {% else %}
+                    <span class="text-subtle">Log in as Student to Apply</span>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="dashboard-card empty-state-card">
+            <p class="text-subtle">No internship listings currently available. Check back soon!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

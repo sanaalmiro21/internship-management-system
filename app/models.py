@@ -45,6 +45,24 @@ class Student(db.Model):
     internships = db.relationship("Internship", backref="student", lazy=True)
     university = db.relationship("University", back_populates="students")
 
+    @property
+    def placement_status(self):
+        # 1. Check for formal placement
+        active_internship = next((i for i in self.internships if i.status in ["Ongoing", "Completed"]), None)
+        if active_internship:
+            return f"Placed ({active_internship.status})"
+        
+        # 2. Check for application activity
+        has_pending = any(a.status == "Pending" for a in self.applications)
+        if has_pending:
+            return "Applying"
+
+        has_accepted = any(a.status == "Accepted" for a in self.applications)
+        if has_accepted:
+            return "Offer Received"
+
+        return "Enrolled"
+
 class Company(db.Model):
     __tablename__ = "companies"
 
@@ -98,12 +116,14 @@ class Application(db.Model):
     application_id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey("students.student_id"), nullable=False)
     company_id = db.Column(db.Integer, db.ForeignKey("companies.company_id"), nullable=False)
+    listing_id = db.Column(db.Integer, db.ForeignKey("internship_listings.listing_id"), nullable=True)  # Links application to the specific post
     application_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     status = db.Column(db.String(30), default="Pending")  # Pending, Accepted, Rejected
     position = db.Column(db.String(80), nullable=False)
     cover_letter = db.Column(db.Text, nullable=True)
 
     internship = db.relationship("Internship", backref="application", uselist=False)
+    listing = db.relationship("InternshipListing", backref=db.backref("applications", lazy=True))
 
 
 class Internship(db.Model):
@@ -122,16 +142,6 @@ class Internship(db.Model):
     evaluations = db.relationship("Evaluation", backref="internship", lazy=True)
 
 
-class Document(db.Model):
-    __tablename__ = "documents"
-
-    document_id = db.Column(db.Integer, primary_key=True)
-    internship_id = db.Column(db.Integer, db.ForeignKey("internships.internship_id"), nullable=False)
-    file_name = db.Column(db.String(150), nullable=False)
-    file_path = db.Column(db.String(255), nullable=False)
-    document_type = db.Column(db.String(50), nullable=False)  # Logbook, Insurance, Report
-    upload_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    uploaded_by = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
 
 
 class Evaluation(db.Model):
@@ -145,3 +155,35 @@ class Evaluation(db.Model):
     comment = db.Column(db.Text, nullable=True)
     evaluation_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     evaluation_type = db.Column(db.String(50), nullable=False)  # Company, University
+
+class InternshipListing(db.Model):
+    __tablename__ = "internship_listings"
+
+    listing_id = db.Column(db.Integer, primary_key=True)
+    company_id = db.Column(db.Integer, db.ForeignKey("companies.company_id"), nullable=False)
+    title = db.Column(db.String(120), nullable=False)
+    department = db.Column(db.String(100), nullable=False)
+    location = db.Column(db.String(120), nullable=False)  # e.g., Remote, Istanbul, On-Site
+    description = db.Column(db.Text, nullable=False)
+    requirements = db.Column(db.Text, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Relationship to Company
+    company = db.relationship("Company", backref=db.backref("listings", lazy=True, cascade="all, delete-orphan"))
+
+class Document(db.Model):
+    __tablename__ = "documents"
+
+    document_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), nullable=False)
+    application_id = db.Column(db.Integer, db.ForeignKey("applications.application_id"), nullable=True)
+    internship_id = db.Column(db.Integer, db.ForeignKey("internships.internship_id"), nullable=True)
+    document_type = db.Column(db.String(50), nullable=False)  # CV, Agreement, Evaluation, Report
+    file_path = db.Column(db.String(255), nullable=False)
+    upload_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # User & Application relationships
+    user = db.relationship("User", backref="documents")
+    application = db.relationship("Application", backref=db.backref("documents", lazy=True))
+    # (Notice: No 'internship = ...' here, because Internship defines the backref)

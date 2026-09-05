@@ -7,15 +7,16 @@
     <div class="dashboard-header-flex">
         <div>
             <h1 class="dashboard-title">Academic Oversight Dashboard</h1>
-            <p class="dashboard-subtitle">Institution: <strong>{{ session.get('username') }}</strong></p>
+            <p class="dashboard-subtitle">Institution: <strong>{{ university.university_name if university else session.get('username') }}</strong></p>
         </div>
         <span class="badge-role">University</span>
     </div>
 
+    <!-- Live Stats Grid -->
     <div class="stats-grid">
         <div class="dashboard-card stat-card stat-card-navy">
             <h4 class="stat-label">Affiliated Students</h4>
-            <span class="stat-value">0</span>
+            <span class="stat-value">{{ total_students }}</span>
         </div>
         <div class="dashboard-card stat-card stat-card-gold">
             <h4 class="stat-label">Approved Placements</h4>
@@ -27,8 +28,9 @@
         </div>
     </div>
 
+    <!-- Enrolled Students Live Roster -->
     <div class="dashboard-card">
-        <h3 class="card-header-line">Enrolled Students</h3>
+        <h3 class="card-header-line">Enrolled Students Roster</h3>
         <div class="table-responsive">
             <table class="data-table">
                 <thead>
@@ -36,17 +38,36 @@
                         <th>Student Name</th>
                         <th>Student Number</th>
                         <th>Department</th>
-                        <th>Company Placement</th>
-                        <th>Status</th>
-                        <th>Final Grade</th>
+                        <th>Email</th>
+                        <th>Placement Status</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% for student in students %}
                     <tr>
-                        <td colspan="6" class="table-empty-cell">
+                        <td><strong>{{ student.first_name }} {{ student.last_name }}</strong></td>
+                        <td>{{ student.student_number }}</td>
+                        <td>{{ student.department }}</td>
+                        <td>{{ student.user.email }}</td>
+                        <td>
+                            {% if student.placement_status == 'Applying' %}
+                                <span class="status-badge status-badge-pending">Applying</span>
+                            {% elif 'Placed' in student.placement_status %}
+                                <span class="status-badge status-badge-accepted">{{ student.placement_status }}</span>
+                            {% elif student.placement_status == 'Offer Received' %}
+                                <span class="status-badge status-badge-gold">Offer Received</span>
+                            {% else %}
+                                <span class="status-badge status-badge-muted">Enrolled</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="table-empty-cell">
                             No students registered under this institution yet.
                         </td>
                     </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>

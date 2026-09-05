@@ -6,57 +6,78 @@
 <div class="container">
     <div class="dashboard-header-flex">
         <div>
-            <h1 class="dashboard-title">Student Workspace</h1>
-            <p class="dashboard-subtitle">Welcome back, <strong>{{ session.get('username') }}</strong></p>
+            <h1 class="dashboard-title">Student Portal</h1>
+            <p class="dashboard-subtitle">
+                Welcome, <strong>{{ student.first_name }} {{ student.last_name }}</strong> 
+                ({{ student.student_number }}) &bull; {{ student.university.university_name }}
+            </p>
         </div>
-        <span class="badge-role">Student</span>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('main.browse_internships') }}" class="btn btn-primary btn-nav-action">Browse Internships</a>
+            <span class="badge-role">Student</span>
+        </div>
     </div>
 
+    <!-- Live Stats Grid -->
     <div class="stats-grid">
         <div class="dashboard-card stat-card stat-card-navy">
-            <h4 class="stat-label">Active Applications</h4>
-            <span class="stat-value">0</span>
+            <h4 class="stat-label">Applications Submitted</h4>
+            <span class="stat-value">{{ total_applications }}</span>
         </div>
         <div class="dashboard-card stat-card stat-card-gold">
-            <h4 class="stat-label">Internship Status</h4>
-            <span class="stat-value-status">Searching</span>
+            <h4 class="stat-label">Active Placement</h4>
+            {% if active_placement %}
+                <span class="stat-value-status" title="{{ active_placement.title }} at {{ active_placement.application.company.company_name }}">
+                    {{ active_placement.application.company.company_name }}
+                </span>
+            {% else %}
+                <span class="stat-value-status">None</span>
+            {% endif %}
         </div>
         <div class="dashboard-card stat-card stat-card-green">
-            <h4 class="stat-label">Logbooks Submitted</h4>
+            <h4 class="stat-label">Approved Logbooks</h4>
             <span class="stat-value">0</span>
         </div>
     </div>
 
-    <div class="dashboard-main-grid">
-        <div class="dashboard-card">
-            <h3 class="card-header-line">Submitted Applications</h3>
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Company</th>
-                            <th>Position</th>
-                            <th>Applied Date</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="4" class="table-empty-cell">
-                                No applications submitted yet. Browse open positions to apply.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="dashboard-card">
-            <h3 class="card-header-line">Quick Actions</h3>
-            <div class="action-stack">
-                <a href="#" class="btn btn-primary">Browse Internship Listings</a>
-                <a href="#" class="btn btn-secondary">Submit Weekly Logbook</a>
-            </div>
+    <!-- Submitted Applications Table -->
+    <div class="dashboard-card">
+        <h3 class="card-header-line">Your Applications</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Company</th>
+                        <th>Applied Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr>
+                        <td><strong>{{ app.position }}</strong></td>
+                        <td>{{ app.company.company_name }}</td>
+                        <td>{{ app.application_date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if app.status == 'Accepted' %}
+                                <span class="status-badge status-badge-accepted">Accepted</span>
+                            {% elif app.status == 'Rejected' %}
+                                <span class="status-badge status-badge-rejected">Rejected</span>
+                            {% else %}
+                                <span class="status-badge status-badge-pending">Pending Review</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="table-empty-cell">
+                            You have not applied for any internships yet. Click "Browse Internships" to find an opening!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

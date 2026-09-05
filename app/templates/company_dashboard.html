@@ -6,57 +6,153 @@
 <div class="container">
     <div class="dashboard-header-flex">
         <div>
-            <h1 class="dashboard-title">Company Management Portal</h1>
-            <p class="dashboard-subtitle">Authorized Partner: <strong>{{ session.get('username') }}</strong></p>
+            <h1 class="dashboard-title">Company Portal</h1>
+            <p class="dashboard-subtitle">Organization: <strong>{{ company.company_name if company else session.get('username') }}</strong></p>
         </div>
-        <span class="badge-role">Company</span>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('main.create_internship') }}" class="btn btn-primary btn-nav-action">+ Post New Internship</a>
+            <span class="badge-role">Company</span>
+        </div>
     </div>
 
+    <!-- Live Stats Grid -->
     <div class="stats-grid">
         <div class="dashboard-card stat-card stat-card-navy">
             <h4 class="stat-label">Active Listings</h4>
-            <span class="stat-value">0</span>
+            <span class="stat-value">{{ total_listings }}</span>
         </div>
         <div class="dashboard-card stat-card stat-card-gold">
-            <h4 class="stat-label">Pending Applicants</h4>
-            <span class="stat-value-status">0</span>
+            <h4 class="stat-label">Applicants Pending</h4>
+            <span class="stat-value-status">{{ pending_applicants_count }}</span>
         </div>
         <div class="dashboard-card stat-card stat-card-green">
             <h4 class="stat-label">Active Interns</h4>
-            <span class="stat-value">0</span>
+            <span class="stat-value">{{ active_interns_count }}</span>
         </div>
     </div>
 
-    <div class="dashboard-main-grid">
-        <div class="dashboard-card">
-            <h3 class="card-header-line">Our Posted Internships</h3>
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Role Title</th>
-                            <th>Location</th>
-                            <th>Applicants</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="4" class="table-empty-cell">
-                                No active internship positions posted yet.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <!-- Candidate Applications Table -->
+    <div class="dashboard-card margin-bottom-lg">
+        <h3 class="card-header-line">Received Applications</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Candidate</th>
+                        <th>Department</th>
+                        <th>Institution</th>
+                        <th>Position</th>
+                        <th>Cover Letter</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Decision</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr>
+                        <td>
+                            <strong>{{ app.student.first_name }} {{ app.student.last_name }}</strong><br>
+                            <small class="text-subtle">{{ app.student.user.email }}</small>
+                        </td>
+                        <td>{{ app.student.department }}</td>
+                        <td>{{ app.student.university.university_name }}</td>
+                        <td><strong>{{ app.position }}</strong></td>
+                        <td>
+                            {% if app.cover_letter %}
+                                <details>
+                                    <summary class="details-summary">Read Statement</summary>
+                                    <p class="details-content">{{ app.cover_letter }}</p>
+                                </details>
+                            {% endif %}
 
-        <div class="dashboard-card">
-            <h3 class="card-header-line">Actions</h3>
-            <div class="action-stack">
-                <a href="#" class="btn btn-primary">+ Post New Internship</a>
-                <a href="#" class="btn btn-secondary">Review Intern Logbooks</a>
-            </div>
+                            {% if app.documents %}
+                                {% for doc in app.documents %}
+                                    <a href="{{ url_for('main.download_document', document_id=doc.document_id) }}" class="doc-attachment-link">
+                                        &#128196; Download {{ doc.document_type }}
+                                    </a>
+                                {% endfor %}
+                            {% elif not app.cover_letter %}
+                                <small class="text-muted">None provided</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ app.application_date.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if app.status == 'Accepted' %}
+                                <span class="status-badge status-badge-accepted">Accepted</span>
+                            {% elif app.status == 'Rejected' %}
+                                <span class="status-badge status-badge-rejected">Rejected</span>
+                            {% else %}
+                                <span class="status-badge status-badge-pending">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if app.status == 'Pending' %}
+                                <div class="action-btn-group">
+                                    <form method="POST" action="{{ url_for('main.decide_application', app_id=app.application_id) }}" class="btn-inline">
+                                        <input type="hidden" name="action" value="accept">
+                                        <button type="submit" class="btn-decision btn-accept">Accept</button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('main.decide_application', app_id=app.application_id) }}" class="btn-inline">
+                                        <input type="hidden" name="action" value="reject">
+                                        <button type="submit" class="btn-decision btn-reject">Reject</button>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">Decision Recorded</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="table-empty-cell">
+                            No student applications received yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Posted Opportunities Table -->
+    <div class="dashboard-card">
+        <h3 class="card-header-line">Your Posted Opportunities</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Position Title</th>
+                        <th>Target Department</th>
+                        <th>Location</th>
+                        <th>Date Posted</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in listings %}
+                    <tr>
+                        <td><strong>{{ item.title }}</strong></td>
+                        <td>{{ item.department }}</td>
+                        <td>{{ item.location }}</td>
+                        <td>{{ item.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>
+                            {% if item.is_active %}
+                                <span class="status-badge status-badge-accepted">Active</span>
+                            {% else %}
+                                <span class="status-badge status-badge-muted">Closed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="table-empty-cell">
+                            No internship listings posted yet. Click "+ Post New Internship" to publish one.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>

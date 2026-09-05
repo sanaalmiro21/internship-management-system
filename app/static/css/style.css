@@ -472,3 +472,133 @@ body {
     margin-bottom: 2rem;
     flex-grow: 1; /* Ensures buttons align at the exact same height */
 }
+
+.dashboard-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 3rem 0 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #E2E8F0;
+}
+
+.dashboard-title {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    color: var(--navy-dark);
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+}
+
+.dashboard-subtitle {
+    color: #64748B;
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Quick Stats Row */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    padding: 1.5rem;
+    align-items: stretch;
+}
+
+.stat-card-navy { border-top-color: var(--navy-dark); }
+.stat-card-gold { border-top-color: var(--gold); }
+.stat-card-green { border-top-color: #10B981; }
+
+.stat-label {
+    color: #64748B;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--navy-dark);
+    font-family: var(--font-heading);
+}
+
+.stat-value-status {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gold-hover);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 2-Column Dashboard Layout */
+.dashboard-main-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.card-header-line {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    color: var(--navy-dark);
+    margin-bottom: 1.2rem;
+    border-bottom: 1px solid #E2E8F0;
+    padding-bottom: 0.5rem;
+    width: 100%;
+    text-transform: uppercase;
+}
+
+.action-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    width: 100%;
+}
+
+.action-stack .btn {
+    text-align: center;
+}
+
+/* Table Design */
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    text-align: left;
+    border-bottom: 2px solid #E2E8F0;
+    color: #64748B;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.75rem 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-table td {
+    padding: 1rem 0.5rem;
+    border-bottom: 1px solid #E2E8F0;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+}
+
+.table-empty-cell {
+    text-align: center;
+    padding: 2.5rem 1rem !important;
+    color: #94A3B8;
+    font-style: italic;
+}

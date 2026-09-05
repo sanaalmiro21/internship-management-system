@@ -1,19 +1,18 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
-from .models import User, Student, Company, Application, Internship, Evaluation, University
+from .models import Admin, User, Student, Company, Application, Internship, Evaluation, University
 
 # --- Authentication Services ---
 
-def register_user(username, email, password, role):
-    # Check if user already exists
-    existing_user = User.query.filter((User.username == username) | (User.email == email)).first()
+def register_user(username, email, password, role, university_id=None):
+    existing_user = User.query.filter(
+        (User.username == username) | (User.email == email)
+    ).first()
     if existing_user:
         return None, "Username or email already exists."
 
     hashed_password = generate_password_hash(password)
-    
-    # FIX: Companies and Universities must start unapproved (False)
-    is_approved_status = True if role == 'Student' else False
+    is_approved_status = True if role == "Student" else False
 
     new_user = User(
         username=username,
@@ -22,18 +21,59 @@ def register_user(username, email, password, role):
         role=role,
         is_approved=is_approved_status
     )
-    
     db.session.add(new_user)
+    db.session.flush()
+
+    if role == "Student":
+        student_profile = Student(
+            student_id=new_user.user_id,
+            university_id=university_id,
+            student_number=f"STD-{new_user.user_id:04d}",
+            first_name=username,
+            last_name="Student",
+            department="Computer Engineering"
+        )
+        db.session.add(student_profile)
+
+    elif role == "Company":
+        company_profile = Company(
+            company_id=new_user.user_id,
+            company_name=username,
+            address="Pending Setup",
+            website=""
+        )
+        db.session.add(company_profile)
+
+    elif role == "University":
+        university_profile = University(
+            university_id=new_user.user_id,
+            university_name=username,
+            department="Engineering"
+        )
+        db.session.add(university_profile)
+
+    elif role == "Admin":
+        admin_profile = Admin(
+            admin_id=new_user.user_id,
+            first_name=username,
+            last_name="Administrator",
+            admin_level="Standard"
+        )
+        db.session.add(admin_profile)
+
     db.session.commit()
     return new_user, "Registration successful."
 
-def authenticate_user(email, password):
-    """Verify user credentials against stored password hash."""
-    user = User.query.filter_by(email=email).first()
-    if user and check_password_hash(user.password, password):
-        return user
-    return None
+def authenticate_user(identifier, password):
+    # Query matching either email or username
+    user = User.query.filter(
+        (User.email == identifier) | (User.username == identifier)
+    ).first()
 
+    if not user or not check_password_hash(user.password, password):
+        return None, "Invalid email/username or password."
+
+    return user, "Authentication successful."
 # --- Application & Query Services ---
 
 def get_student_by_user_id(user_id):

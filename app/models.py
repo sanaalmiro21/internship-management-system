@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from . import db
 
-
 class User(db.Model):
     __tablename__ = "users"
 
@@ -12,12 +11,12 @@ class User(db.Model):
     role = db.Column(db.String(20), nullable=False)  # student, company, university, admin
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     is_approved = db.Column(db.Boolean, default=False)
+    
     # Subtype Relationships
     student_profile = db.relationship("Student", backref="user", uselist=False, cascade="all, delete-orphan")
     company_profile = db.relationship("Company", backref="user", uselist=False, cascade="all, delete-orphan")
     university_profile = db.relationship("University", backref="user", uselist=False, cascade="all, delete-orphan")
     admin_profile = db.relationship("Admin", backref="user", uselist=False, cascade="all, delete-orphan")
-
 
 class University(db.Model):
     __tablename__ = "universities"
@@ -27,7 +26,7 @@ class University(db.Model):
     department = db.Column(db.String(100), nullable=True)
 
     # Relationships
-    students = db.relationship("Student", backref="university", lazy=True)
+    students = db.relationship("Student", back_populates="university", lazy=True)
     supervisors = db.relationship("UniversitySupervisor", backref="university", lazy=True)
 
 
@@ -44,7 +43,7 @@ class Student(db.Model):
     # Relationships
     applications = db.relationship("Application", backref="student", lazy=True)
     internships = db.relationship("Internship", backref="student", lazy=True)
-
+    university = db.relationship("University", back_populates="students")
 
 class Company(db.Model):
     __tablename__ = "companies"

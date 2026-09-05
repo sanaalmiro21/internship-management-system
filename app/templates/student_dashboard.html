@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard — IMS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header-flex">
+        <div>
+            <h1 class="dashboard-title">Student Workspace</h1>
+            <p class="dashboard-subtitle">Welcome back, <strong>{{ session.get('username') }}</strong></p>
+        </div>
+        <span class="badge-role">Student</span>
+    </div>
+
+    <div class="stats-grid">
+        <div class="dashboard-card stat-card stat-card-navy">
+            <h4 class="stat-label">Active Applications</h4>
+            <span class="stat-value">0</span>
+        </div>
+        <div class="dashboard-card stat-card stat-card-gold">
+            <h4 class="stat-label">Internship Status</h4>
+            <span class="stat-value-status">Searching</span>
+        </div>
+        <div class="dashboard-card stat-card stat-card-green">
+            <h4 class="stat-label">Logbooks Submitted</h4>
+            <span class="stat-value">0</span>
+        </div>
+    </div>
+
+    <div class="dashboard-main-grid">
+        <div class="dashboard-card">
+            <h3 class="card-header-line">Submitted Applications</h3>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Company</th>
+                            <th>Position</th>
+                            <th>Applied Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="4" class="table-empty-cell">
+                                No applications submitted yet. Browse open positions to apply.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3 class="card-header-line">Quick Actions</h3>
+            <div class="action-stack">
+                <a href="#" class="btn btn-primary">Browse Internship Listings</a>
+                <a href="#" class="btn btn-secondary">Submit Weekly Logbook</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

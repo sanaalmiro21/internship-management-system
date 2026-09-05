@@ -1,22 +1,28 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 from .services import db, register_user, authenticate_user
 from . import db
-from .models import User
+from .models import University, User
 main = Blueprint("main", __name__)
 
 @main.route("/")
 def index():
     return render_template("index.html")
-
 @main.route("/register", methods=["GET", "POST"])
 def register():
+    # Fetch approved universities so students can select their institution
+    approved_universities = University.query.join(User).filter(User.is_approved == True).all()
+
     if request.method == "POST":
         username = request.form.get("username")
         email = request.form.get("email")
         password = request.form.get("password")
         role = request.form.get("role")
+        
+        # Grab university_id only if the role being registered is a student
+        university_id = request.form.get("university_id") if role == 'Student' else None
 
-        user, msg = register_user(username, email, password, role)
+        # Pass university_id (and other student fields if your function accepts them)
+        user, msg = register_user(username, email, password, role, university_id=university_id)
         if not user:
             flash(msg, "danger")
             return redirect(url_for("main.register"))
@@ -29,32 +35,32 @@ def register():
             
         return redirect(url_for("main.login"))
 
-    return render_template("register.html")
+    return render_template("register.html", universities=approved_universities)
 
 @main.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = request.form.get("email")
+        identifier = request.form.get("identifier")
         password = request.form.get("password")
 
-        user = authenticate_user(email, password)
-        if user:
-            # EXACT PLACEMENT: Check approval status before creating the session
-            if not user.is_approved and user.role in ["Company", "University"]:
-                flash("Your account is pending Admin approval.", "warning")
-                return redirect(url_for("main.login"))
-
-            # If approved (or if they are a Student/Admin), log them in
-            session["user_id"] = user.user_id
-            session["username"] = user.username
-            session["role"] = user.role
-            flash(f"Welcome back, {user.username}!", "success")
-            return redirect(url_for("main.dashboard"))
-        else:
-            flash("Invalid email or password.", "danger")
+        user, msg = authenticate_user(identifier, password)
+        if not user:
+            flash(msg, "danger")
             return redirect(url_for("main.login"))
 
+        if not user.is_approved and user.role in ["Company", "University"]:
+            flash("Your account is pending admin approval.", "warning")
+            return redirect(url_for("main.login"))
+
+        session["user_id"] = user.user_id
+        session["username"] = user.username
+        session["role"] = user.role
+
+        flash(f"Welcome back, {user.username}!", "success")
+        return redirect(url_for("main.dashboard"))
+
     return render_template("login.html")
+
 @main.route('/dashboard')
 def dashboard():
     role = session.get("role")
@@ -117,3 +123,4 @@ def reject_user(user_id):
     
     flash(f'{user.role} account for {user.username} has been rejected and removed.', 'danger')
     return redirect(url_for('main.admin_dashboard'))
+

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}University Dashboard — IMS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header-flex">
+        <div>
+            <h1 class="dashboard-title">Academic Oversight Dashboard</h1>
+            <p class="dashboard-subtitle">Institution: <strong>{{ session.get('username') }}</strong></p>
+        </div>
+        <span class="badge-role">University</span>
+    </div>
+
+    <div class="stats-grid">
+        <div class="dashboard-card stat-card stat-card-navy">
+            <h4 class="stat-label">Affiliated Students</h4>
+            <span class="stat-value">0</span>
+        </div>
+        <div class="dashboard-card stat-card stat-card-gold">
+            <h4 class="stat-label">Approved Placements</h4>
+            <span class="stat-value-status">0</span>
+        </div>
+        <div class="dashboard-card stat-card stat-card-green">
+            <h4 class="stat-label">Evaluations Pending</h4>
+            <span class="stat-value">0</span>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h3 class="card-header-line">Enrolled Students</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Student Number</th>
+                        <th>Department</th>
+                        <th>Company Placement</th>
+                        <th>Status</th>
+                        <th>Final Grade</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="6" class="table-empty-cell">
+                            No students registered under this institution yet.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

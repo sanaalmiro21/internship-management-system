@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block title %}Company Dashboard — IMS{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-header-flex">
+        <div>
+            <h1 class="dashboard-title">Company Management Portal</h1>
+            <p class="dashboard-subtitle">Authorized Partner: <strong>{{ session.get('username') }}</strong></p>
+        </div>
+        <span class="badge-role">Company</span>
+    </div>
+
+    <div class="stats-grid">
+        <div class="dashboard-card stat-card stat-card-navy">
+            <h4 class="stat-label">Active Listings</h4>
+            <span class="stat-value">0</span>
+        </div>
+        <div class="dashboard-card stat-card stat-card-gold">
+            <h4 class="stat-label">Pending Applicants</h4>
+            <span class="stat-value-status">0</span>
+        </div>
+        <div class="dashboard-card stat-card stat-card-green">
+            <h4 class="stat-label">Active Interns</h4>
+            <span class="stat-value">0</span>
+        </div>
+    </div>
+
+    <div class="dashboard-main-grid">
+        <div class="dashboard-card">
+            <h3 class="card-header-line">Our Posted Internships</h3>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Role Title</th>
+                            <th>Location</th>
+                            <th>Applicants</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="4" class="table-empty-cell">
+                                No active internship positions posted yet.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <h3 class="card-header-line">Actions</h3>
+            <div class="action-stack">
+                <a href="#" class="btn btn-primary">+ Post New Internship</a>
+                <a href="#" class="btn btn-secondary">Review Intern Logbooks</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

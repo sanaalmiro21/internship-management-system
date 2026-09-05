@@ -5,12 +5,12 @@
 {% block content %}
 <div class="auth-card">
     <h2>Welcome Back</h2>
-    <p class="auth-subtitle">Log in with your credentials to access your dashboard</p>
+    <p class="auth-subtitle">Sign in with your email or username</p>
 
     <form method="POST" action="{{ url_for('main.login') }}" class="auth-form">
         <div class="form-group">
-            <label for="email">Email Address</label>
-            <input type="email" id="email" name="email" required placeholder="e.g. user@example.com">
+            <label for="identifier">Email or Username</label>
+            <input type="text" id="identifier" name="identifier" required placeholder="e.g. admin@ims.edu or super_admin">
         </div>
 
         <div class="form-group">
@@ -18,7 +18,7 @@
             <input type="password" id="password" name="password" required placeholder="Enter your password">
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Log In</button>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
     </form>
 
     <p class="auth-footer">Don't have an account? <a href="{{ url_for('main.register') }}">Register here</a></p>

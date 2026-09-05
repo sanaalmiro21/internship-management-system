@@ -32,9 +32,39 @@
             </select>
         </div>
 
+        <div class="form-group" id="university-field">
+            <label for="university_id">Affiliated University</label>
+            <select name="university_id" id="university_id">
+                <option value="" disabled selected>Select your institution</option>
+                {% for uni in universities %}
+                    <option value="{{ uni.university_id }}">{{ uni.university_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
         <button type="submit" class="btn btn-primary btn-block">Register Account</button>
     </form>
 
     <p class="auth-footer">Already have an account? <a href="{{ url_for('main.login') }}">Login here</a></p>
 </div>
+
+<script>
+    const roleSelect = document.getElementById('role');
+    const uniField = document.getElementById('university-field');
+    const uniSelect = document.getElementById('university_id');
+
+    function toggleUniversityField() {
+        if (roleSelect.value === 'Student') {
+            uniField.style.display = 'block';
+            uniSelect.required = true;
+        } else {
+            uniField.style.display = 'none';
+            uniSelect.required = false;
+            uniSelect.value = '';
+        }
+    }
+
+    roleSelect.addEventListener('change', toggleUniversityField);
+    toggleUniversityField();
+</script>
 {% endblock %}

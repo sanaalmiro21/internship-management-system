@@ -1,4 +1,6 @@
-from datetime import datetime, timezone
+
+from datetime import datetime, timezone, date
+from sqlalchemy import UniqueConstraint
 from . import db
 
 class User(db.Model):
@@ -28,40 +30,8 @@ class University(db.Model):
     # Relationships
     students = db.relationship("Student", back_populates="university", lazy=True)
     supervisors = db.relationship("UniversitySupervisor", backref="university", lazy=True)
+    evaluated_internships = db.relationship("Internship", back_populates="evaluator", lazy=True)
 
-
-class Student(db.Model):
-    __tablename__ = "students"
-
-    student_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), primary_key=True)
-    university_id = db.Column(db.Integer, db.ForeignKey("universities.university_id"), nullable=False)
-    student_number = db.Column(db.String(30), unique=True, nullable=False)
-    first_name = db.Column(db.String(50), nullable=False)
-    last_name = db.Column(db.String(50), nullable=False)
-    department = db.Column(db.String(100), nullable=False)
-
-    # Relationships
-    applications = db.relationship("Application", backref="student", lazy=True)
-    internships = db.relationship("Internship", backref="student", lazy=True)
-    university = db.relationship("University", back_populates="students")
-
-    @property
-    def placement_status(self):
-        # 1. Check for formal placement
-        active_internship = next((i for i in self.internships if i.status in ["Ongoing", "Completed"]), None)
-        if active_internship:
-            return f"Placed ({active_internship.status})"
-        
-        # 2. Check for application activity
-        has_pending = any(a.status == "Pending" for a in self.applications)
-        if has_pending:
-            return "Applying"
-
-        has_accepted = any(a.status == "Accepted" for a in self.applications)
-        if has_accepted:
-            return "Offer Received"
-
-        return "Enrolled"
 
 class Company(db.Model):
     __tablename__ = "companies"
@@ -72,8 +42,101 @@ class Company(db.Model):
     website = db.Column(db.String(150), nullable=True)
 
     instructors = db.relationship("CompanyInstructor", backref="company", lazy=True)
-    applications = db.relationship("Application", backref="company", lazy=True)
+    received_applications = db.relationship("Application", back_populates="company", lazy=True)
+    company_internships = db.relationship("Internship", back_populates="company", lazy=True)
 
+
+class Student(db.Model):
+    __tablename__ = "students"
+
+    student_id = db.Column(db.Integer, db.ForeignKey("users.user_id"), primary_key=True)
+    university_id = db.Column(db.Integer, db.ForeignKey("universities.university_id"), nullable=False)
+    student_number = db.Column(db.String(30), nullable=False)
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    department = db.Column(db.String(100), nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("university_id", "student_number", name="uq_student_university_number"),
+    )
+
+    # Relationships (Using clean back_populates pairs)
+    university = db.relationship("University", back_populates="students")
+    applications = db.relationship("Application", back_populates="student", lazy=True)
+    internships = db.relationship("Internship", back_populates="student", lazy=True)
+
+    @property
+    def placement_status(self):
+        # 1. Check for formal placement
+        active_internship = next((i for i in self.internships if i.status in ["Ongoing", "Scheduled", "Approved"]), None)
+        if active_internship:
+            return f"Placed ({active_internship.status})"
+        
+        # 2. Check for offer
+        has_offer = any(a.status == "Offered" for a in self.applications)
+        if has_offer:
+            return "Offer Received"
+
+        # 3. Check for active application
+        has_pending = any(a.status == "Pending" for a in self.applications)
+        if has_pending:
+            return "Applying"
+
+        return "Enrolled"
+
+
+class Application(db.Model):
+    __tablename__ = "applications"
+
+    application_id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("students.student_id"), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey("companies.company_id"), nullable=False)
+    listing_id = db.Column(db.Integer, db.ForeignKey("internship_listings.listing_id"), nullable=False)
+    
+    position = db.Column(db.String(120), nullable=False)
+    cover_letter = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), default="Pending")  # 'Pending', 'Offered', 'Accepted', 'Rejected', 'Withdrawn'
+    application_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Explicit bidirectional relationships
+    student = db.relationship("Student", back_populates="applications")
+    company = db.relationship("Company", back_populates="received_applications")
+    listing = db.relationship("InternshipListing", backref=db.backref("applications", lazy=True))
+    internship = db.relationship("Internship", back_populates="application", uselist=False)
+
+
+class Internship(db.Model):
+    __tablename__ = "internships"
+
+    internship_id = db.Column(db.Integer, primary_key=True)
+    
+    application_id = db.Column(db.Integer, db.ForeignKey("applications.application_id"), nullable=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("students.student_id"), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey("companies.company_id"), nullable=False)
+    listing_id = db.Column(db.Integer, db.ForeignKey("internship_listings.listing_id"), nullable=True)
+
+    # Duration & Hours Tracking
+    start_date = db.Column(db.Date, nullable=False, default=date.today)
+    end_date = db.Column(db.Date, nullable=False)
+    required_hours = db.Column(db.Float, default=240.0, nullable=False)
+
+    # Lifecycle: 'Scheduled', 'Ongoing', 'Pending Evaluation', 'Approved', 'Rejected'
+    status = db.Column(db.String(30), default="Ongoing", nullable=False)
+
+    # University Final Academic Evaluation
+    grade = db.Column(db.String(20), nullable=True)
+    evaluation_notes = db.Column(db.Text, nullable=True)
+    evaluated_by = db.Column(db.Integer, db.ForeignKey("universities.university_id"), nullable=True)
+    evaluated_at = db.Column(db.DateTime, nullable=True)
+
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Relationships matched to their explicit pairs
+    application = db.relationship("Application", back_populates="internship")
+    student = db.relationship("Student", back_populates="internships")
+    company = db.relationship("Company", back_populates="company_internships")
+    evaluator = db.relationship("University", back_populates="evaluated_internships")
+    listing = db.relationship("InternshipListing", backref=db.backref("associated_internships", lazy=True))
 
 class Admin(db.Model):
     __tablename__ = "admins"
@@ -110,37 +173,32 @@ class UniversitySupervisor(db.Model):
     evaluations = db.relationship("Evaluation", backref="supervisor", lazy=True)
 
 
-class Application(db.Model):
-    __tablename__ = "applications"
+class LogbookEntry(db.Model):
+    __tablename__ = "logbook_entries"
 
-    application_id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey("students.student_id"), nullable=False)
-    company_id = db.Column(db.Integer, db.ForeignKey("companies.company_id"), nullable=False)
-    listing_id = db.Column(db.Integer, db.ForeignKey("internship_listings.listing_id"), nullable=True)  # Links application to the specific post
-    application_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    status = db.Column(db.String(30), default="Pending")  # Pending, Accepted, Rejected
-    position = db.Column(db.String(80), nullable=False)
-    cover_letter = db.Column(db.Text, nullable=True)
+    entry_id = db.Column(db.Integer, primary_key=True)
+    internship_id = db.Column(db.Integer, db.ForeignKey("internships.internship_id"), nullable=False)
+    
+    # Work day tracking
+    entry_date = db.Column(db.Date, nullable=False)
+    hours_worked = db.Column(db.Float, nullable=False, default=8.0)
+    tasks_performed = db.Column(db.Text, nullable=False)
+    learnings = db.Column(db.Text, nullable=True)
 
-    internship = db.relationship("Internship", backref="application", uselist=False)
-    listing = db.relationship("InternshipListing", backref=db.backref("applications", lazy=True))
+    # Supervisor Review: 'Pending', 'Approved', 'Needs Revision'
+    status = db.Column(db.String(20), default="Pending", nullable=False)
+    supervisor_feedback = db.Column(db.Text, nullable=True)
+    reviewed_at = db.Column(db.DateTime, nullable=True)
 
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-class Internship(db.Model):
-    __tablename__ = "internships"
+    # Relationship
+    internship = db.relationship("Internship", backref=db.backref("logbook_entries", cascade="all, delete-orphan", lazy=True))
 
-    internship_id = db.Column(db.Integer, primary_key=True)
-    application_id = db.Column(db.Integer, db.ForeignKey("applications.application_id"), unique=True, nullable=False)
-    student_id = db.Column(db.Integer, db.ForeignKey("students.student_id"), nullable=False)
-    title = db.Column(db.String(120), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    start_date = db.Column(db.Date, nullable=False)
-    end_date = db.Column(db.Date, nullable=False)
-    status = db.Column(db.String(30), default="Ongoing")  # Ongoing, Completed, Terminated
-
-    documents = db.relationship("Document", backref="internship", lazy=True)
-    evaluations = db.relationship("Evaluation", backref="internship", lazy=True)
-
+    # Constraint: one log entry per calendar day per internship
+    __table_args__ = (
+        db.UniqueConstraint("internship_id", "entry_date", name="uq_internship_entry_date"),
+    )
 
 
 
@@ -166,6 +224,12 @@ class InternshipListing(db.Model):
     location = db.Column(db.String(120), nullable=False)  # e.g., Remote, Istanbul, On-Site
     description = db.Column(db.Text, nullable=False)
     requirements = db.Column(db.Text, nullable=True)
+
+    # Predefined Placement Duration & Requirement
+    start_date = db.Column(db.Date, nullable=False, default=date.today)
+    end_date = db.Column(db.Date, nullable=False)
+    required_hours = db.Column(db.Float, default=240.0, nullable=False)
+
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 

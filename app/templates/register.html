@@ -32,14 +32,68 @@
             </select>
         </div>
 
-        <div class="form-group" id="university-field">
-            <label for="university_id">Affiliated University</label>
-            <select name="university_id" id="university_id">
-                <option value="" disabled selected>Select your institution</option>
-                {% for uni in universities %}
-                    <option value="{{ uni.university_id }}">{{ uni.university_name }}</option>
-                {% endfor %}
-            </select>
+        <!-- Student Dynamic Fields Container -->
+        <div id="student-fields">
+            <div class="form-group">
+                <label for="student_number">Official Student Number / ID</label>
+                <input type="text" id="student_number" name="student_number" placeholder="e.g. 20220102001">
+            </div>
+
+            <div class="form-group">
+                <label for="first_name">First Name</label>
+                <input type="text" id="first_name" name="first_name" placeholder="e.g. John">
+            </div>
+
+            <div class="form-group">
+                <label for="last_name">Last Name</label>
+                <input type="text" id="last_name" name="last_name" placeholder="e.g. Doe">
+            </div>
+
+            <div class="form-group">
+                <label for="department">Department</label>
+                <input type="text" id="department" name="department" placeholder="e.g. Computer Engineering">
+            </div>
+
+            <div class="form-group" id="university-field">
+                <label for="university_id">Affiliated University</label>
+                <select name="university_id" id="university_id">
+                    <option value="" disabled selected>Select your institution</option>
+                    {% for uni in universities %}
+                        <option value="{{ uni.university_id }}">{{ uni.university_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <!-- Company Dynamic Fields Container -->
+        <div id="company-fields" class="is-hidden">
+            <div class="form-group">
+                <label for="company_name">Company Name</label>
+                <input type="text" id="company_name" name="company_name" placeholder="e.g. Tech Solutions Inc.">
+            </div>
+
+            <div class="form-group">
+                <label for="address">Company Address</label>
+                <input type="text" id="address" name="address" placeholder="e.g. 123 Tech Park, Istanbul">
+            </div>
+
+            <div class="form-group">
+                <label for="website">Company Website (Optional)</label>
+                <input type="url" id="website" name="website" data-optional="true" placeholder="https://example.com">
+            </div>
+        </div>
+
+        <!-- University Dynamic Fields Container -->
+        <div id="university-fields" class="is-hidden">
+            <div class="form-group">
+                <label for="university_name">University / Institution Name</label>
+                <input type="text" id="university_name" name="university_name" placeholder="e.g. Karabük University">
+            </div>
+
+            <div class="form-group">
+                <label for="uni_department">Department / Faculty (Optional)</label>
+                <input type="text" id="uni_department" name="uni_department" data-optional="true" placeholder="e.g. Faculty of Engineering">
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary btn-block">Register Account</button>
@@ -50,21 +104,45 @@
 
 <script>
     const roleSelect = document.getElementById('role');
-    const uniField = document.getElementById('university-field');
-    const uniSelect = document.getElementById('university_id');
+    const studentFields = document.getElementById('student-fields');
+    const companyFields = document.getElementById('company-fields');
+    const universityFields = document.getElementById('university-fields');
 
-    function toggleUniversityField() {
-        if (roleSelect.value === 'Student') {
-            uniField.style.display = 'block';
-            uniSelect.required = true;
-        } else {
-            uniField.style.display = 'none';
-            uniSelect.required = false;
-            uniSelect.value = '';
-        }
+    const studentInputs = studentFields.querySelectorAll('input, select');
+    const companyInputs = companyFields.querySelectorAll('input');
+    const universityInputs = universityFields.querySelectorAll('input');
+
+    function updateFormFields() {
+        const selectedRole = roleSelect.value;
+
+        // Toggle visibility
+        studentFields.classList.toggle('is-hidden', selectedRole !== 'Student');
+        companyFields.classList.toggle('is-hidden', selectedRole !== 'Company');
+        universityFields.classList.toggle('is-hidden', selectedRole !== 'University');
+
+        // Apply required only to fields that are NOT marked data-optional
+        studentInputs.forEach(input => {
+            if (!input.dataset.optional) {
+                input.required = (selectedRole === 'Student');
+            }
+        });
+
+       companyInputs.forEach(input => {
+            if (input.dataset.optional === "true") {
+                input.required = false;
+            } else {
+                input.required = (selectedRole === 'Company');
+            }
+        });
+
+        universityInputs.forEach(input => {
+            if (!input.dataset.optional) {
+                input.required = (selectedRole === 'University');
+            }
+        });
     }
 
-    roleSelect.addEventListener('change', toggleUniversityField);
-    toggleUniversityField();
+    roleSelect.addEventListener('change', updateFormFields);
+    updateFormFields();
 </script>
 {% endblock %}

@@ -792,3 +792,285 @@ body {
     font-weight: 600;
     text-decoration: underline;
 }
+
+.is-hidden {
+    display: none !important;
+}
+
+/* ==========================================================================
+   INTERNSHIP LOGBOOK & EVALUATION STYLES
+   ========================================================================== */
+
+/* Typography & General Resets */
+.logbook-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1rem 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Card Left Accent Borders */
+.card-border-pending { border-left: 5px solid #E9C46A !important; }
+.card-border-approved { border-left: 5px solid #2A9D8F !important; }
+.card-border-rejected { border-left: 5px solid #E76F51 !important; }
+.card-border-scheduled { border-left: 5px solid #457B9D !important; }
+
+/* Form Controls & Fonts */
+.ims-form input,
+.ims-form textarea,
+.ims-form select,
+.ims-form button {
+    font-family: inherit !important;
+    font-size: 0.95rem;
+}
+
+.form-label-styled {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #1E293B;
+    margin-bottom: 0.45rem;
+}
+
+.form-input-styled {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    color: #0F172A;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input-styled:focus {
+    outline: none;
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-textarea-styled {
+    width: 100%;
+    padding: 0.75rem 0.85rem;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    color: #0F172A;
+    box-sizing: border-box;
+    line-height: 1.55;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-textarea-styled:focus {
+    outline: none;
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Custom Buttons */
+.btn-submit-log {
+    background: #C49746;
+    color: #FFFFFF;
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    padding: 0.75rem 1.75rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-submit-log:hover {
+    background: #B08334;
+}
+
+.btn-submit-log:active {
+    transform: scale(0.98);
+}
+
+.btn-cancel-revision {
+    display: none;
+    background: #E2E8F0;
+    color: #475569;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-cancel-revision:hover {
+    background: #CBD5E1;
+}
+
+/* Status Badges */
+.badge-status {
+    display: inline-block;
+    font-weight: 700;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+.badge-status-approved {
+    background-color: #DEF7EC;
+    color: #03543F;
+}
+
+.badge-status-revision {
+    background-color: #FDF6B2;
+    color: #723B13;
+}
+
+.badge-status-pending {
+    background-color: #E1EFFE;
+    color: #1E429F;
+}
+
+/* Clean full-width card layout */
+.logbook-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.logbook-top-bar {
+    display: grid;
+    grid-template-columns: 200px 160px 1fr auto;
+    gap: 1.25rem;
+    align-items: flex-end;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #F1F5F9;
+}
+
+@media (max-width: 900px) {
+    .logbook-top-bar {
+        grid-template-columns: 1fr 1fr;
+    }
+    .logbook-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.form-textarea-tall {
+    width: 100%;
+    min-height: 180px;
+    padding: 0.85rem 1rem;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    color: #0F172A;
+    box-sizing: border-box;
+    line-height: 1.6;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-textarea-tall:focus {
+    outline: none;
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Placement Overview Card */
+.placement-banner-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-left: 5px solid #2A9D8F !important; /* Ongoing green accent */
+    border-radius: 12px;
+    padding: 1.75rem 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 850px) {
+    .placement-banner-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+}
+
+.placement-banner-info {
+    flex: 1;
+}
+
+.placement-banner-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin: 0 0 0.35rem 0;
+    letter-spacing: -0.01em;
+}
+
+.placement-banner-subtitle {
+    font-size: 0.95rem;
+    color: #64748B;
+    margin: 0 0 1.15rem 0;
+}
+
+.placement-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+    font-size: 0.88rem;
+    color: #475569;
+    padding-top: 1rem;
+    border-top: 1px solid #F1F5F9;
+}
+
+.placement-meta-item strong {
+    color: #1E293B;
+    font-weight: 600;
+}
+
+.placement-banner-action {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+@media (max-width: 850px) {
+    .placement-banner-action {
+        align-items: flex-start;
+        width: 100%;
+    }
+}
+
+.btn-open-logbook {
+    background: #C49746;
+    color: #FFFFFF !important;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.75rem 1.6rem;
+    border-radius: 9999px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s ease, transform 0.1s ease;
+    white-space: nowrap;
+}
+
+.btn-open-logbook:hover {
+    background: #B08334;
+}
+
+.btn-open-logbook:active {
+    transform: scale(0.98);
+}

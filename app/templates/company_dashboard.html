@@ -38,14 +38,14 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Candidate</th>
-                        <th>Department</th>
-                        <th>Institution</th>
-                        <th>Position</th>
-                        <th>Cover Letter</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Decision</th>
+                        <th scope="col">Candidate</th>
+                        <th scope="col">Department</th>
+                        <th scope="col">Institution</th>
+                        <th scope="col">Position</th>
+                        <th scope="col">Cover Letter</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Decision</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -115,18 +115,73 @@
         </div>
     </div>
 
-    <!-- Posted Opportunities Table -->
+    <!-- Active Interns & Logbook Review Table -->
+    <div class="dashboard-card margin-bottom-lg">
+        <h3 class="card-header-line">Active & Past Interns</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Intern Candidate</th>
+                        <th scope="col">Department & Institution</th>
+                        <th scope="col">Role Title</th>
+                        <th scope="col">Placement Duration</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Logbook Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for intern in company_internships %}
+                    <tr>
+                        <td>
+                            <strong>{{ intern.student.first_name }} {{ intern.student.last_name }}</strong><br>
+                            <small class="text-subtle">{{ intern.student.user.email }}</small>
+                        </td>
+                        <td>
+                            {{ intern.student.department }}<br>
+                            <small class="text-subtle">{{ intern.student.university.university_name }}</small>
+                        </td>
+                        <td><strong>{{ intern.listing.title if intern.listing else "Engineering Intern" }}</strong></td>
+                        <td>
+                            {{ intern.start_date.strftime('%b %d') }} &rarr; {{ intern.end_date.strftime('%b %d, %Y') }}<br>
+                            <small class="text-subtle">{{ intern.required_hours }} hrs target</small>
+                        </td>
+                        <td>
+                            <span class="status-badge {% if intern.status == 'Approved' %}status-badge-accepted{% elif intern.status == 'Ongoing' %}status-badge-pending{% elif intern.status == 'Rejected' %}status-badge-rejected{% else %}status-badge-muted{% endif %}">
+                                {{ intern.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('main.logbook', internship_id=intern.internship_id) }}" class="btn-decision btn-accept" style="text-decoration: none; display: inline-block; padding: 0.35rem 0.8rem;">
+                                Review Logbook &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="table-empty-cell">
+                            No active or past interns assigned to your organization yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Posted Opportunities Table with Actions -->
     <div class="dashboard-card">
         <h3 class="card-header-line">Your Posted Opportunities</h3>
         <div class="table-responsive">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Position Title</th>
-                        <th>Target Department</th>
-                        <th>Location</th>
-                        <th>Date Posted</th>
-                        <th>Status</th>
+                        <th scope="col">Position Title</th>
+                        <th scope="col">Target Department</th>
+                        <th scope="col">Location</th>
+                        <th scope="col">Date Posted</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -143,10 +198,33 @@
                                 <span class="status-badge status-badge-muted">Closed</span>
                             {% endif %}
                         </td>
+                        <td>
+                            <div class="action-btn-group">
+                                <!-- Close / Reopen Toggle -->
+                                <form method="POST" action="{{ url_for('main.toggle_listing_status', listing_id=item.listing_id) }}" class="btn-inline">
+                                    {% if item.is_active %}
+                                        <button type="submit" class="btn-decision btn-reject" onclick="return confirm('Stop receiving applications for this listing?');">
+                                            Close
+                                        </button>
+                                    {% else %}
+                                        <button type="submit" class="btn-decision btn-accept">
+                                            Reopen
+                                        </button>
+                                    {% endif %}
+                                </form>
+
+                                <!-- Delete -->
+                                <form method="POST" action="{{ url_for('main.delete_listing', listing_id=item.listing_id) }}" class="btn-inline">
+                                    <button type="submit" class="btn-decision btn-reject" onclick="return confirm('Are you sure you want to permanently delete this listing?');">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="table-empty-cell">
+                        <td colspan="6" class="table-empty-cell">
                             No internship listings posted yet. Click "+ Post New Internship" to publish one.
                         </td>
                     </tr>

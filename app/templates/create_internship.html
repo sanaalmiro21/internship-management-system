@@ -26,18 +26,34 @@
                 </div>
                 <div class="form-group">
                     <label for="location">Location / Workplace Mode *</label>
-                    <input type="text" id="location" name="location" required placeholder="e.g. Remote, Hybrid, or Istanbul">
+                    <input type="text" id="location" name="location" required placeholder="e.g. Remote, Hybrid, or On-site">
+                </div>
+            </div>
+
+            <!-- Placement Term Duration & Hours Requirement -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="start_date">Start Date *</label>
+                    <input type="date" id="start_date" name="start_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="end_date">End Date *</label>
+                    <input type="date" id="end_date" name="end_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="required_hours">Required Hours *</label>
+                    <input type="number" id="required_hours" name="required_hours" step="1" min="20" max="1000" value="240" required>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="description">Role Description & Responsibilities *</label>
-                <textarea id="description" name="description" rows="5" required placeholder="Describe key tasks, projects, and technologies involved..." style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; resize: vertical;"></textarea>
+                <label for="description">Role Description &amp; Responsibilities *</label>
+                <textarea id="description" name="description" rows="5" required placeholder="Describe key tasks, projects, and technologies involved..." style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; resize: vertical; box-sizing: border-box;"></textarea>
             </div>
 
             <div class="form-group">
                 <label for="requirements">Prerequisites / Desired Skills (Optional)</label>
-                <textarea id="requirements" name="requirements" rows="3" placeholder="e.g. Python, Flask, Git, Relational Databases..." style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; resize: vertical;"></textarea>
+                <textarea id="requirements" name="requirements" rows="3" placeholder="e.g. Python, Flask, Git, Relational Databases..." style="width: 100%; border: 1px solid #CBD5E1; border-radius: 6px; padding: 0.75rem; font-family: inherit; font-size: 0.95rem; resize: vertical; box-sizing: border-box;"></textarea>
             </div>
 
             <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1rem;">Publish Internship Listing</button>

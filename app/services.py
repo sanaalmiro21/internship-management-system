@@ -4,13 +4,42 @@ from .models import Admin, User, Student, Company, Application, Internship, Eval
 
 # --- Authentication Services ---
 
-def register_user(username, email, password, role, university_id=None):
+def register_user(username, email, password, role, profile_data=None, university_id=None):
+    if profile_data is None:
+        profile_data = {}
+
+    # Support university_id if passed as a standalone argument
+    if university_id and "university_id" not in profile_data:
+        profile_data["university_id"] = university_id
+
+    # 1. Check for duplicate username or email
     existing_user = User.query.filter(
         (User.username == username) | (User.email == email)
     ).first()
     if existing_user:
         return None, "Username or email already exists."
 
+    # 2. Validate Student fields before creating User record
+    if role == "Student":
+        student_num = profile_data.get("student_number", "").strip()
+        uni_id = profile_data.get("university_id")
+
+        if not student_num:
+            return None, "Official student number is required."
+
+        if not uni_id:
+            return None, "Affiliated university is required."
+
+        # Verify composite uniqueness: student number must be unique per university
+        existing_student = Student.query.filter_by(
+            university_id=int(uni_id),
+            student_number=student_num
+        ).first()
+
+        if existing_student:
+            return None, f"Student number '{student_num}' is already registered for this institution."
+
+    # 3. Create core User record
     hashed_password = generate_password_hash(password)
     is_approved_status = True if role == "Student" else False
 
@@ -24,31 +53,48 @@ def register_user(username, email, password, role, university_id=None):
     db.session.add(new_user)
     db.session.flush()
 
+    # 4. Create child role profile records
     if role == "Student":
         student_profile = Student(
             student_id=new_user.user_id,
-            university_id=university_id,
-            student_number=f"STD-{new_user.user_id:04d}",
-            first_name=username,
-            last_name="Student",
-            department="Computer Engineering"
+            university_id=int(profile_data["university_id"]),
+            student_number=profile_data["student_number"].strip(),
+            first_name=profile_data.get("first_name", username).strip(),
+            last_name=profile_data.get("last_name", "Student").strip(),
+            department=profile_data.get("department", "Engineering").strip()
         )
         db.session.add(student_profile)
 
     elif role == "Company":
+        company_name = profile_data.get("company_name", username).strip()
+        address = profile_data.get("address", "").strip()
+        website = profile_data.get("website", "").strip() or None
+
+        # Address cannot be null or empty
+        if not address:
+            address = "Pending Setup"
+
         company_profile = Company(
             company_id=new_user.user_id,
-            company_name=username,
-            address="Pending Setup",
-            website=""
+            company_name=company_name,
+            address=address,
+            website=website
         )
         db.session.add(company_profile)
 
     elif role == "University":
+        uni_name = profile_data.get("university_name", "").strip()
+        if not uni_name:
+            uni_name = username  # Fallback to username if name is left blank
+
+        dept = profile_data.get("department")
+        if dept:
+            dept = dept.strip()
+
         university_profile = University(
             university_id=new_user.user_id,
-            university_name=username,
-            department="Engineering"
+            university_name=uni_name,
+            department=dept
         )
         db.session.add(university_profile)
 

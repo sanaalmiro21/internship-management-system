@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}Internship Logbook — IMS{% endblock %}
+
+{% block content %}
+<div class="logbook-container">
+    <!-- Header -->
+    <div class="dashboard-header-flex" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+        <div>
+            <h1 class="dashboard-title" style="margin: 0; font-size: 1.75rem; font-weight: 800; color: #0F172A; letter-spacing: -0.02em;">
+                INTERNSHIP LOGBOOK &amp; EVALUATION
+            </h1>
+            <p class="dashboard-subtitle" style="margin: 0.4rem 0 0 0; color: #64748B; font-size: 0.95rem;">
+                Student: <strong style="color: #1E293B;">{{ internship.student.first_name }} {{ internship.student.last_name }}</strong> 
+                ({{ internship.student.department }}) &bull; 
+                Host: <strong style="color: #1E293B;">{{ internship.company.company_name }}</strong>
+            </p>
+        </div>
+        <div class="dashboard-actions">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary" style="font-weight: 600; font-size: 0.85rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none;">
+                &larr; BACK TO DASHBOARD
+            </a>
+        </div>
+    </div>
+
+    <!-- Duration & Progress Stats Grid -->
+    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+        <div class="dashboard-card stat-card stat-card-navy">
+            <h4 class="stat-label">Duration Period</h4>
+            <span class="stat-value" style="font-size: 1.15rem; font-weight: 700;">
+                {{ internship.start_date.strftime('%b %d') if internship.start_date else 'Flexible' }} &rarr; 
+                {{ internship.end_date.strftime('%b %d, %Y') if internship.end_date else 'Flexible' }}
+            </span>
+        </div>
+        <div class="dashboard-card stat-card stat-card-gold">
+            <h4 class="stat-label">Approved Hours</h4>
+            <span class="stat-value">{{ approved_hours }} / {{ internship.required_hours or 240 }} hrs</span>
+        </div>
+        <div class="dashboard-card stat-card stat-card-green">
+            <h4 class="stat-label">Completion</h4>
+            <span class="stat-value">{{ progress_pct }}%</span>
+        </div>
+    </div>
+
+    <!-- Placement Scheduled Banner -->
+    {% if internship.start_date and today_date < internship.start_date.strftime('%Y-%m-%d') %}
+        <div class="dashboard-card card-border-scheduled" style="margin-bottom: 2rem; padding: 1.25rem 1.5rem;">
+            <h4 style="margin: 0 0 0.4rem 0; color: #0369A1;">Placement Scheduled</h4>
+            <p style="margin: 0; color: #0C4A6E; line-height: 1.5;">
+                Your internship at <strong>{{ internship.company.company_name }}</strong> begins on 
+                <strong>{{ internship.start_date.strftime('%B %d, %Y') }}</strong>. 
+                Daily logs will unlock once your placement begins.
+            </p>
+        </div>
+    {% endif %}
+
+    <!-- Academic Evaluation & University Decision Section -->
+{% set is_eligible_for_grading = (internship.status == 'Pending Evaluation') or (approved_hours >= (internship.required_hours or 240) and today_date >= internship.end_date.strftime('%Y-%m-%d')) %}
+
+    {% if internship.status in ['Approved', 'Rejected'] or session.get('role') in ['University', 'Admin'] %}
+        <div class="dashboard-card {% if internship.status == 'Approved' %}card-border-approved{% elif internship.status == 'Rejected' %}card-border-rejected{% else %}card-border-pending{% endif %}" style="margin-bottom: 2rem; padding: 1.75rem;">
+            <h3 style="margin: 0 0 1rem 0; font-size: 1.2rem; font-weight: 700; color: #0F172A;">Academic Evaluation &amp; University Decision</h3>
+
+            {% if internship.status in ['Approved', 'Rejected'] %}
+                <!-- Display Final Grade Once Evaluated -->
+                <div style="display: flex; gap: 3rem; align-items: center; margin-top: 1rem; flex-wrap: wrap;">
+                    <div>
+                        <span style="font-size: 0.8rem; text-transform: uppercase; color: #64748B;">Academic Status:</span><br>
+                        <span class="badge-status {% if internship.status == 'Approved' %}badge-status-approved{% else %}badge-status-rejected{% endif %}" style="margin-top: 0.3rem;">
+                            {{ internship.status }}
+                        </span>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.8rem; text-transform: uppercase; color: #64748B;">Assigned Grade:</span><br>
+                        <strong style="font-size: 1.3rem; color: #0F172A;">{{ internship.grade or "N/A" }}</strong>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.8rem; text-transform: uppercase; color: #64748B;">Evaluated Date:</span><br>
+                        <span style="color: #334155; font-weight: 500;">{{ internship.evaluated_at.strftime('%b %d, %Y') if internship.evaluated_at else "N/A" }}</span>
+                    </div>
+                </div>
+                {% if internship.evaluation_notes %}
+                    <p style="margin-top: 1.25rem; color: #334155; line-height: 1.6; background: #F8FAFC; padding: 1rem; border-radius: 6px; border: 1px solid #E2E8F0;">
+                        <strong>Academic Coordinator Notes:</strong> {{ internship.evaluation_notes }}
+                    </p>
+                {% endif %}
+
+            {% elif session.get('role') in ['University', 'Admin'] %}
+                {% if is_eligible_for_grading %}
+                    <!-- Eligible: Show Grading Form -->
+                    <form method="POST" action="{{ url_for('main.evaluate_internship', internship_id=internship.internship_id) }}" class="ims-form" style="margin-top: 1.25rem;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.25rem;">
+                            <div>
+                                <label for="decision" class="form-label-styled">Academic Decision</label>
+                                <select name="decision" id="decision" required class="form-input-styled">
+                                    <option value="Approved">Approve &amp; Grant Academic Credit (Pass)</option>
+                                    <option value="Rejected">Reject (Requirements Unmet)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="grade" class="form-label-styled">Final Grade / Mark</label>
+                                <input type="text" name="grade" id="grade" required placeholder="e.g. Satisfactory, A, 95%" class="form-input-styled">
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1.25rem;">
+                            <label for="notes" class="form-label-styled">Evaluation Remarks</label>
+                            <textarea name="notes" id="notes" rows="3" placeholder="Provide feedback regarding compliance..." class="form-textarea-styled"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary" onclick="return confirm('Submit formal academic evaluation?');">
+                            Submit Academic Evaluation
+                        </button>
+                    </form>
+                {% else %}
+                    <!-- Ineligible: Inform Coordinator that Internship is Still in Progress -->
+                    <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem 1.25rem; margin-top: 1rem;">
+                        <p style="margin: 0; color: #475569; font-size: 0.92rem; line-height: 1.5;">
+                            🔒 <strong>Evaluation Locked:</strong> This internship is still active. Academic grading unlocks once the placement period ends (<strong>{{ internship.end_date.strftime('%b %d, %Y') if internship.end_date else 'TBD' }}</strong>) and the student completes the required approved hours (<strong>{{ approved_hours }} / {{ internship.required_hours or 240 }} hrs</strong>).
+                        </p>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- Student Daily / Retroactive Logging Form -->
+    <!-- Student Daily / Retroactive Logging Form -->
+    {% if session.get('role') == 'Student' and internship.student_id == session.get('user_id') and internship.status == 'Ongoing' and is_submission_window_open and (not internship.start_date or today_date >= internship.start_date.strftime('%Y-%m-%d')) %}
+        <div class="dashboard-card ims-form" id="log-card-container" style="margin-bottom: 2rem; padding: 2rem; border-radius: 12px; background: #FFFFFF; border: 1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #F1F5F9; padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                <div>
+                    <h3 id="form-legend" style="margin: 0; font-size: 1.35rem; font-weight: 800; color: #0F172A; letter-spacing: -0.01em;">
+                        LOG DAILY WORK ACTIVITY
+                    </h3>
+                    <p style="margin: 0.35rem 0 0 0; color: #64748B; font-size: 0.92rem;">
+                        Submit regular daily work or choose earlier dates to record retroactive logs.
+                    </p>
+                </div>
+                <button type="button" id="cancel-revision-btn" class="btn-cancel-revision" onclick="resetForm()">
+                    Cancel Revision
+                </button>
+            </div>
+
+            <form method="POST" id="logbook-form" action="{{ url_for('main.logbook', internship_id=internship.internship_id) }}">
+                <!-- Top Row Controls -->
+                <div class="logbook-top-bar">
+                    <div>
+                        <label for="entry_date" class="form-label-styled">Date Worked</label>
+                        <input type="date" id="entry_date" name="entry_date" required 
+                               min="{{ internship.start_date.strftime('%Y-%m-%d') if internship.start_date else '' }}" 
+                               max="{{ max_selectable_date }}" 
+                               value="{{ max_selectable_date }}"
+                               class="form-input-styled">
+                    </div>
+                    <div>
+                        <label for="hours_worked" class="form-label-styled">Hours (0.5 - 12)</label>
+                        <input type="number" id="hours_worked" name="hours_worked" step="0.5" min="0.5" max="12.0" value="8.0" required 
+                               class="form-input-styled">
+                    </div>
+                    <div><!-- Spacing column --></div>
+                    <div>
+                        <button type="submit" id="submit-btn" class="btn-submit-log" style="white-space: nowrap; height: 42px; display: inline-flex; align-items: center; justify-content: center;">
+                            SUBMIT DAILY LOG
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Side-by-Side Large Textareas filling 100% width -->
+                <div class="logbook-form-grid">
+                    <div>
+                        <label for="tasks_performed" class="form-label-styled">Tasks Performed &amp; Duties (Required)</label>
+                        <textarea id="tasks_performed" name="tasks_performed" required 
+                                  placeholder="Detail systems built, APIs written, bugs resolved, unit tests run, hardware configured, or meetings attended..."
+                                  class="form-textarea-tall"></textarea>
+                    </div>
+
+                    <div>
+                        <label for="learnings" class="form-label-styled">Technical Learnings &amp; Skills (Optional)</label>
+                        <textarea id="learnings" name="learnings" 
+                                  placeholder="Key libraries, architectures, database query optimizations, debugging tools, or workflows learned today..."
+                                  class="form-textarea-tall"></textarea>
+                    </div>
+                </div>
+            </form>
+
+            {% if approved_hours >= (internship.required_hours or 240) %}
+                <div style="border-top: 1px solid #E2E8F0; margin-top: 1.5rem; padding-top: 1.25rem; display: flex; justify-content: flex-end;">
+                    <form method="POST" action="{{ url_for('main.submit_final_internship', internship_id=internship.internship_id) }}">
+                        <button type="submit" class="btn btn-secondary" onclick="return confirm('Ready to finalize and submit full internship to your University for grading?');" style="border-radius: 8px; font-weight: 600;">
+                            Finish &amp; Submit for Academic Grading &rarr;
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- Logbook Entries Table -->
+    <div class="dashboard-card" style="padding: 1.75rem;">
+        <h3 style="margin: 0 0 1.25rem 0; font-size: 1.25rem; font-weight: 800; color: #0F172A;">Logged Entries &amp; Verifications</h3>
+        <div class="table-responsive">
+            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align: left; border-bottom: 2px solid #E2E8F0; color: #475569; font-size: 0.85rem; text-transform: uppercase;">
+                        <th style="padding: 0.75rem 0.5rem; width: 12%;">Date</th>
+                        <th style="padding: 0.75rem 0.5rem; width: 8%;">Hours</th>
+                        <th style="padding: 0.75rem 0.5rem; width: 32%;">Tasks Performed</th>
+                        <th style="padding: 0.75rem 0.5rem; width: 20%;">Learnings</th>
+                        <th style="padding: 0.75rem 0.5rem; width: 12%;">Status</th>
+                        <th style="padding: 0.75rem 0.5rem; width: 16%;">Supervisor Action / Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr style="border-bottom: 1px solid #F1F5F9; font-size: 0.92rem; color: #1E293B;">
+                        <td style="padding: 0.85rem 0.5rem; font-weight: 600;">{{ entry.entry_date.strftime('%Y-%m-%d') }}</td>
+                        <td style="padding: 0.85rem 0.5rem;">{{ entry.hours_worked }} hrs</td>
+                        <td style="padding: 0.85rem 0.5rem; line-height: 1.5;">{{ entry.tasks_performed }}</td>
+                        <td style="padding: 0.85rem 0.5rem; color: #64748B; font-style: italic;">{{ entry.learnings or "—" }}</td>
+                        <td style="padding: 0.85rem 0.5rem;">
+                            {% if entry.status == 'Approved' %}
+                                <span class="badge-status badge-status-approved">Approved</span>
+                            {% elif entry.status == 'Needs Revision' %}
+                                <span class="badge-status badge-status-revision">Revision</span>
+                            {% else %}
+                                <span class="badge-status badge-status-pending">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 0.85rem 0.5rem;">
+                            <!-- Student: Re-edit when revision is needed -->
+                            {% if session.get('role') == 'Student' and entry.status == 'Needs Revision' %}
+                                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-revision-trigger"
+                                            style="background: #F59E0B; color: #FFFFFF; font-weight: 600; font-size: 0.8rem; padding: 0.35rem 0.75rem; border-radius: 6px; border: none; cursor: pointer;"
+                                            data-date="{{ entry.entry_date.strftime('%Y-%m-%d') }}"
+                                            data-hours="{{ entry.hours_worked }}"
+                                            data-tasks="{{ entry.tasks_performed | e }}"
+                                            data-learnings="{{ (entry.learnings or '') | e }}">
+                                        Edit &amp; Resubmit
+                                    </button>
+                                    <small style="color: #92400E;">Feedback: {{ entry.supervisor_feedback or "No comment" }}</small>
+                                </div>
+                            
+                            <!-- Company Review Actions (Locked if Approved) -->
+                            {% elif session.get('role') in ['Company', 'Admin'] and entry.internship.company_id == session.get('user_id') and is_submission_window_open %}
+                                {% if entry.status == 'Approved' %}
+                                    <span style="color: #10B981; font-weight: 700; font-size: 0.85rem;">✓ Locked (Approved)</span>
+                                    {% if entry.supervisor_feedback %}
+                                        <br><small style="color: #64748B;">{{ entry.supervisor_feedback }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <form method="POST" action="{{ url_for('main.review_logbook_entry', entry_id=entry.entry_id) }}" class="ims-form">
+                                        <div style="display: flex; gap: 0.3rem; margin-bottom: 0.4rem;">
+                                            <input type="text" name="feedback" placeholder="Remarks..." value="{{ entry.supervisor_feedback or '' }}" class="form-input-styled" style="padding: 0.3rem; font-size: 0.8rem;">
+                                        </div>
+                                        <div style="display: flex; gap: 0.3rem;">
+                                            <button type="submit" name="status" value="Approved" style="background: #10B981; color: white; border: none; border-radius: 4px; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-weight: 700; cursor: pointer;">Approve</button>
+                                            <button type="submit" name="status" value="Needs Revision" style="background: #F59E0B; color: white; border: none; border-radius: 4px; padding: 0.25rem 0.5rem; font-size: 0.75rem; font-weight: 700; cursor: pointer;">Revision</button>
+                                        </div>
+                                    </form>
+                                {% endif %}
+                            {% else %}
+                                <span style="font-size: 0.85rem; color: #64748B;">{{ entry.supervisor_feedback or "—" }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #94A3B8; padding: 2.5rem;">
+                            No daily logbook entries recorded yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.btn-revision-trigger').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const entryDate = this.getAttribute('data-date');
+            const hours = this.getAttribute('data-hours');
+            const tasks = this.getAttribute('data-tasks');
+            const learnings = this.getAttribute('data-learnings');
+
+            const dateInput = document.getElementById('entry_date');
+            const hoursInput = document.getElementById('hours_worked');
+            const tasksInput = document.getElementById('tasks_performed');
+            const learningsInput = document.getElementById('learnings');
+            const legend = document.getElementById('form-legend');
+            const submitBtn = document.getElementById('submit-btn');
+            const cancelBtn = document.getElementById('cancel-revision-btn');
+
+            if (dateInput) {
+                dateInput.value = entryDate;
+                dateInput.readOnly = true;
+                dateInput.style.backgroundColor = '#F1F5F9';
+            }
+            if (hoursInput) hoursInput.value = hours;
+            if (tasksInput) tasksInput.value = tasks;
+            if (learningsInput) learningsInput.value = learnings;
+
+            if (legend) {
+                legend.innerText = 'REVISING ENTRY FOR ' + entryDate;
+                legend.style.color = '#B45309';
+            }
+            if (submitBtn) {
+                submitBtn.innerText = 'RESUBMIT REVISED LOG';
+                submitBtn.style.background = '#F59E0B';
+            }
+            if (cancelBtn) {
+                cancelBtn.style.display = 'inline-block';
+            }
+
+            const container = document.getElementById('log-card-container');
+            if (container) {
+                container.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    });
+});
+
+function resetForm() {
+    const dateInput = document.getElementById('entry_date');
+    const tasksInput = document.getElementById('tasks_performed');
+    const learningsInput = document.getElementById('learnings');
+    const legend = document.getElementById('form-legend');
+    const submitBtn = document.getElementById('submit-btn');
+    const cancelBtn = document.getElementById('cancel-revision-btn');
+
+    if (dateInput) {
+        dateInput.readOnly = false;
+        dateInput.style.backgroundColor = '#FFFFFF';
+        dateInput.value = '{{ max_selectable_date }}';
+    }
+    if (tasksInput) tasksInput.value = '';
+    if (learningsInput) learningsInput.value = '';
+
+    if (legend) {
+        legend.innerText = 'LOG DAILY WORK ACTIVITY';
+        legend.style.color = '#0F172A';
+    }
+    if (submitBtn) {
+        submitBtn.innerText = 'SUBMIT DAILY LOG';
+        submitBtn.style.background = '#C49746';
+    }
+    if (cancelBtn) {
+        cancelBtn.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

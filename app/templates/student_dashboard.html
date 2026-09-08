@@ -18,6 +18,89 @@
         </div>
     </div>
 
+    <!-- Offers Received Waiting Area (Appears when student has pending offers) -->
+    {% if offers and not active_internship %}
+        <div class="dashboard-card margin-bottom-lg" style="border-left: 5px solid #e9c46a;">
+            <h3 class="card-header-line">Placement Offers Received ({{ offers|length }})</h3>
+            <p class="text-subtle" style="margin-top: -0.5rem; margin-bottom: 1.25rem;">
+                You have received the following placement offers. Review the term dates and select the opportunity you wish to accept.
+            </p>
+
+            <div style="display: grid; gap: 1rem;">
+                {% for offer in offers %}
+                    <div style="background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h4 style="margin: 0; color: #0d1b2a; font-size: 1.15rem;">{{ offer.position }}</h4>
+                            <p style="margin: 0.35rem 0 0 0; color: #415a77;">
+                                Organization: <strong>{{ offer.company.company_name }}</strong> &bull; Location: {{ offer.listing.location if offer.listing else "On-site" }}
+                            </p>
+                            <p class="text-subtle" style="margin: 0.35rem 0 0 0; font-size: 0.88rem;">
+                                Term Duration: 
+                                <strong>{{ offer.listing.start_date.strftime('%b %d, %Y') }}</strong> &rarr; 
+                                <strong>{{ offer.listing.end_date.strftime('%b %d, %Y') }}</strong> 
+                                &bull; Requirement: <strong>{{ offer.listing.required_hours }} Hours</strong>
+                            </p>
+                        </div>
+                        <div>
+                            <form method="POST" action="{{ url_for('main.accept_offer', app_id=offer.application_id) }}" style="margin: 0;">
+                                <button type="submit" class="btn btn-primary" onclick="return confirm('Accept this offer from {{ offer.company.company_name }}? Accepting this placement will withdraw other pending applications.');">
+                                    Accept Offer &amp; Start Placement &rarr;
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    <!-- Active Internship Callout Card -->
+    {% if active_internship %}
+        <div class="placement-banner-card">
+            <!-- Left Column: Details & Metadata -->
+            <div class="placement-banner-info">
+                <h2 class="placement-banner-title">
+                    {{ active_internship.listing.title if active_internship.listing else "Engineering Intern" }}
+                </h2>
+                <p class="placement-banner-subtitle">
+                    Host Organization: <strong>{{ active_internship.company.company_name }}</strong>
+                </p>
+
+                <div class="placement-meta-row">
+                    <div class="placement-meta-item">
+                        <span style="color: #64748B;">Duration:</span> 
+                        <strong>
+                            {{ active_internship.start_date.strftime('%b %d, %Y') if active_internship.start_date else 'TBD' }} 
+                            &rarr; 
+                            {{ active_internship.end_date.strftime('%b %d, %Y') if active_internship.end_date else 'TBD' }}
+                        </strong>
+                    </div>
+
+                    <div class="placement-meta-item">
+                        <span style="color: #64748B;">Target Requirement:</span> 
+                        <strong>{{ active_internship.required_hours or 240 }} Hours</strong>
+                    </div>
+
+                    {% if active_internship.grade %}
+                        <div class="placement-meta-item">
+                            <span style="color: #64748B;">Grade:</span> 
+                            <strong>{{ active_internship.grade }}</strong>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column: Status Badge & Action Button -->
+            <div class="placement-banner-action">
+                <span class="status-badge {% if active_internship.status == 'Approved' %}status-badge-accepted{% elif active_internship.status in ['Ongoing', 'Scheduled'] %}status-badge-pending{% else %}status-badge-muted{% endif %}" style="font-size: 0.8rem; font-weight: 700; padding: 0.35rem 0.85rem; border-radius: 9999px;">
+                    ● {{ active_internship.status }}
+                </span>
+                <a href="{{ url_for('main.logbook', internship_id=active_internship.internship_id) }}" class="btn-open-logbook">
+                    OPEN DAILY LOGBOOK &rarr;
+                </a>
+            </div>
+        </div>
+    {% endif %}
+
     <!-- Live Stats Grid -->
     <div class="stats-grid">
         <div class="dashboard-card stat-card stat-card-navy">
@@ -25,18 +108,20 @@
             <span class="stat-value">{{ total_applications }}</span>
         </div>
         <div class="dashboard-card stat-card stat-card-gold">
-            <h4 class="stat-label">Active Placement</h4>
-            {% if active_placement %}
-                <span class="stat-value-status" title="{{ active_placement.title }} at {{ active_placement.application.company.company_name }}">
-                    {{ active_placement.application.company.company_name }}
+            <h4 class="stat-label">Placement Status</h4>
+            {% if active_internship %}
+                <span class="stat-value-status" title="{{ active_internship.company.company_name }}">
+                    {{ active_internship.status }}
                 </span>
+            {% elif offers %}
+                <span class="stat-value-status">{{ offers|length }} Offer(s)</span>
             {% else %}
-                <span class="stat-value-status">None</span>
+                <span class="stat-value-status">None Active</span>
             {% endif %}
         </div>
         <div class="dashboard-card stat-card stat-card-green">
-            <h4 class="stat-label">Approved Logbooks</h4>
-            <span class="stat-value">0</span>
+            <h4 class="stat-label">Approved Hours</h4>
+            <span class="stat-value">{{ approved_hours_total or 0 }} hrs</span>
         </div>
     </div>
 
@@ -47,10 +132,11 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Position</th>
-                        <th>Company</th>
-                        <th>Applied Date</th>
-                        <th>Status</th>
+                        <th scope="col">Position</th>
+                        <th scope="col">Company</th>
+                        <th scope="col">Applied Date</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -62,16 +148,35 @@
                         <td>
                             {% if app.status == 'Accepted' %}
                                 <span class="status-badge status-badge-accepted">Accepted</span>
+                            {% elif app.status == 'Offered' %}
+                                <span class="status-badge status-badge-gold">Offer Received</span>
                             {% elif app.status == 'Rejected' %}
                                 <span class="status-badge status-badge-rejected">Rejected</span>
+                            {% elif app.status == 'Withdrawn' %}
+                                <span class="status-badge status-badge-muted">Withdrawn</span>
                             {% else %}
                                 <span class="status-badge status-badge-pending">Pending Review</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if app.status == 'Offered' and not active_internship %}
+                                <form method="POST" action="{{ url_for('main.accept_offer', app_id=app.application_id) }}" style="display:inline; margin:0;">
+                                    <button type="submit" class="btn-decision btn-accept" style="cursor:pointer;" onclick="return confirm('Accept this offer and begin placement?');">
+                                        Accept Offer
+                                    </button>
+                                </form>
+                            {% elif app.status == 'Accepted' and active_internship and active_internship.listing_id == app.listing_id %}
+                                <a href="{{ url_for('main.logbook', internship_id=active_internship.internship_id) }}" class="doc-attachment-link">
+                                    View Logbook &rarr;
+                                </a>
+                            {% else %}
+                                <span class="text-subtle" style="font-size: 0.85rem;">—</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" class="table-empty-cell">
+                        <td colspan="5" class="table-empty-cell">
                             You have not applied for any internships yet. Click "Browse Internships" to find an opening!
                         </td>
                     </tr>

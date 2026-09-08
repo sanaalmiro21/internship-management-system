@@ -20,11 +20,64 @@
         </div>
         <div class="dashboard-card stat-card stat-card-gold">
             <h4 class="stat-label">Approved Placements</h4>
-            <span class="stat-value-status">0</span>
+            <span class="stat-value-status">{{ approved_placements_count }}</span>
         </div>
         <div class="dashboard-card stat-card stat-card-green">
             <h4 class="stat-label">Evaluations Pending</h4>
-            <span class="stat-value">0</span>
+            <span class="stat-value">{{ pending_evaluations_count }}</span>
+        </div>
+    </div>
+
+    <!-- Active Placements & Logbook Audit Table -->
+    <div class="dashboard-card margin-bottom-lg">
+        <h3 class="card-header-line">Placement & Academic Logbook Auditing</h3>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Student</th>
+                        <th scope="col">Department</th>
+                        <th scope="col">Host Organization</th>
+                        <th scope="col">Duration</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Grade</th>
+                        <th scope="col">Academic Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in uni_internships %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.student.first_name }} {{ item.student.last_name }}</strong><br>
+                            <small class="text-subtle">{{ item.student.student_number }}</small>
+                        </td>
+                        <td>{{ item.student.department }}</td>
+                        <td>{{ item.company.company_name }}</td>
+                        <td>
+                            {{ item.start_date.strftime('%b %d') }} &rarr; {{ item.end_date.strftime('%b %d, %Y') }}<br>
+                            <small class="text-subtle">{{ item.required_hours }} hrs target</small>
+                        </td>
+                        <td>
+                            <span class="status-badge {% if item.status == 'Approved' %}status-badge-accepted{% elif item.status == 'Rejected' %}status-badge-rejected{% elif item.status == 'Pending Evaluation' %}status-badge-gold{% else %}status-badge-pending{% endif %}">
+                                {{ item.status }}
+                            </span>
+                        </td>
+                        <td><strong>{{ item.grade or "—" }}</strong></td>
+                        <td>
+                            <a href="{{ url_for('main.logbook', internship_id=item.internship_id) }}" class="btn-decision btn-accept" style="text-decoration: none; display: inline-block; padding: 0.35rem 0.8rem;">
+                                Audit & Grade &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="table-empty-cell">
+                            No student placements currently registered under your institution.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -35,11 +88,11 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Student Name</th>
-                        <th>Student Number</th>
-                        <th>Department</th>
-                        <th>Email</th>
-                        <th>Placement Status</th>
+                        <th scope="col">Student Name</th>
+                        <th scope="col">Student Number</th>
+                        <th scope="col">Department</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Placement Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -52,12 +105,12 @@
                         <td>
                             {% if student.placement_status == 'Applying' %}
                                 <span class="status-badge status-badge-pending">Applying</span>
-                            {% elif 'Placed' in student.placement_status %}
+                            {% elif student.placement_status and 'Placed' in student.placement_status %}
                                 <span class="status-badge status-badge-accepted">{{ student.placement_status }}</span>
                             {% elif student.placement_status == 'Offer Received' %}
                                 <span class="status-badge status-badge-gold">Offer Received</span>
                             {% else %}
-                                <span class="status-badge status-badge-muted">Enrolled</span>
+                                <span class="status-badge status-badge-muted">{{ student.placement_status or 'Enrolled' }}</span>
                             {% endif %}
                         </td>
                     </tr>

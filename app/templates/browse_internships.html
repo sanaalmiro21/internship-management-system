@@ -1,54 +1,83 @@
 {% extends "base.html" %}
 
-{% block title %}Explore Internships — IMS{% endblock %}
+{% block title %}Available Opportunities — IMS{% endblock %}
 
 {% block content %}
 <div class="container">
-    <div class="dashboard-header-flex">
+    <div class="dashboard-header-flex" style="margin-bottom: 2rem;">
         <div>
-            <h1 class="dashboard-title">Available Internship Opportunities</h1>
+            <h1 class="dashboard-title">AVAILABLE INTERNSHIP OPPORTUNITIES</h1>
             <p class="dashboard-subtitle">Browse verified positions posted by partner companies</p>
         </div>
-        {% if session.get('role') == 'Student' %}
-            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary btn-nav-action">Back to Dashboard</a>
-        {% endif %}
+        <div class="dashboard-actions">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary btn-nav-action">BACK TO DASHBOARD</a>
+        </div>
     </div>
 
-    <div class="listings-grid">
-        {% for item in listings %}
-        <div class="dashboard-card listing-card">
-            <div>
-                <div class="listing-card-header">
-                    <span class="listing-dept-tag">{{ item.department }}</span>
-                    <span class="listing-location-tag">{{ item.location }}</span>
-                </div>
-                <h3 class="listing-title">{{ item.title }}</h3>
-                <p class="listing-company-name">{{ item.company.company_name }}</p>
-                <p class="listing-description">
-                    {{ item.description[:140] }}{% if item.description|length > 140 %}...{% endif %}
+    {% if has_active_placement %}
+        <div class="dashboard-card" style="border-left: 4px solid #b8860b; margin-bottom: 1.5rem; padding: 1rem 1.5rem;">
+            <strong>Notice:</strong> You currently have an active ongoing internship placement. Submitting new applications is disabled until your placement concludes.
+        </div>
+    {% endif %}
+
+    {% if not listings %}
+        <div class="dashboard-card text-center" style="padding: 3rem 1.5rem;">
+            <p class="text-subtle" style="font-size: 1.1rem; margin: 0;">No active internship opportunities are available at this time. Please check back later.</p>
+        </div>
+    {% else %}
+        {% for listing in listings %}
+            <div class="dashboard-card" style="margin-bottom: 1.75rem;">
+                <!-- 1. Position Title First -->
+                <h2 class="dashboard-title" style="font-size: 1.65rem; margin: 0 0 0.35rem 0; line-height: 1.2;">
+                    {{ listing.title }}
+                </h2>
+
+                <!-- 2. Department & Location Subtitle -->
+                <p class="text-subtle" style="margin-bottom: 0.5rem; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                    {{ listing.department }} &bull; {{ listing.location }}
                 </p>
-            </div>
 
-            <div class="card-footer-flex">
-                <span class="text-subtle">Posted {{ item.created_at.strftime('%b %d, %Y') }}</span>
-                {% if session.get('role') == 'Student' %}
-                    {% if has_active_placement %}
-                        <span class="status-badge status-badge-muted">Placed (Locked)</span>
-                    {% elif item.listing_id in applied_listing_ids %}
-                        <span class="status-badge status-badge-accepted">Applied</span>
-                    {% else %}
-                        <a href="{{ url_for('main.apply_internship', listing_id=item.listing_id) }}" class="btn btn-primary btn-sm">Apply Now</a>
-                    {% endif %}
-                {% else %}
-                    <span class="text-subtle">Log in as Student to Apply</span>
+                <!-- 3. Company Name -->
+                <p style="font-weight: 600; color: #415a77; margin-bottom: 0.75rem;">
+                    {{ listing.company.company_name if listing.company else "Partner Company" }}
+                </p>
+
+                <!-- 4. Description -->
+                <div style="margin-bottom: 0.75rem; line-height: 1.6;">
+                    {{ listing.description }}
+                </div>
+
+                <!-- 5. Requirements (if present) -->
+                {% if listing.requirements %}
+                    <div style="margin-bottom: 1.25rem; font-size: 0.95rem;">
+                        <strong>Requirements:</strong> {{ listing.requirements }}
+                    </div>
                 {% endif %}
+
+                <!-- 6. Footer: Date on left, button pushed completely to the right -->
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 1.25rem; margin-top: 1.5rem; box-sizing: border-box;">
+                    <span class="text-subtle" style="font-size: 0.85rem;">
+                        Posted {{ listing.created_at.strftime('%b %d, %Y') }}
+                    </span>
+
+                    <div style="margin-left: auto;">
+                        {% if session.get("role") == "Student" %}
+                            {% if has_active_placement %}
+                                <button class="btn btn-secondary btn-sm" disabled style="opacity: 0.6; cursor: not-allowed;">Placement Active</button>
+                            {% elif listing.listing_id in applied_listing_ids %}
+                                <span class="status-badge status-badge-accepted" style="padding: 0.4rem 0.85rem; font-size: 0.9rem;">Applied</span>
+                            {% else %}
+                                <a href="{{ url_for('main.apply_internship', listing_id=listing.listing_id) }}" class="btn btn-primary" style="text-decoration: none; padding: 0.55rem 1.5rem; display: inline-block;">
+                                    APPLY NOW
+                                </a>
+                            {% endif %}
+                        {% elif not session.get("user_id") %}
+                            <a href="{{ url_for('main.login') }}" class="btn btn-primary" style="text-decoration: none; padding: 0.55rem 1.5rem; display: inline-block;">Login to Apply</a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-        </div>
-        {% else %}
-        <div class="dashboard-card empty-state-card">
-            <p class="text-subtle">No internship listings currently available. Check back soon!</p>
-        </div>
         {% endfor %}
-    </div>
+    {% endif %}
 </div>
 {% endblock %}

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Internship Dossier — {{ internship.student.first_name }} {{ internship.student.last_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="report-body">
+
+    <!-- Controls Bar -->
+    <div class="report-action-bar">
+        <a href="{{ url_for('main.logbook', internship_id=internship.internship_id) }}" class="btn btn-secondary btn-report-back">
+            &larr; Back to Logbook
+        </a>
+        <button onclick="window.print()" class="btn-report-print">
+            🖨️ Print / Save as PDF
+        </button>
+    </div>
+
+    <!-- Official Printable Report Container -->
+    <div class="report-page-wrapper">
+        <div class="report-header">
+            <div class="report-title-area">
+                <h1>OFFICIAL INTERNSHIP COMPLETION DOSSIER</h1>
+                <p>Internship Management System Verification Document &bull; Generated: {{ generated_date.strftime('%B %d, %Y') }}</p>
+            </div>
+            <div class="report-status-block">
+                <span class="report-status-label">Academic Result:</span><br>
+                <strong class="report-status-val {% if internship.status == 'Approved' %}status-approved{% elif internship.status == 'Rejected' %}status-rejected{% else %}status-pending{% endif %}">
+                    {{ internship.status }} ({{ internship.grade or "Pending" }})
+                </strong>
+            </div>
+        </div>
+
+        <!-- Metadata Section -->
+        <div class="report-info-grid">
+            <div class="report-info-block">
+                <h4>Candidate Information</h4>
+                <p><strong>Name:</strong> {{ internship.student.first_name }} {{ internship.student.last_name }}</p>
+                <p><strong>Student ID:</strong> {{ internship.student.student_number or "N/A" }}</p>
+                <p><strong>Department:</strong> {{ internship.student.department or "Engineering" }}</p>
+            </div>
+            <div class="report-info-block">
+                <h4>Placement Information</h4>
+                <p><strong>Organization:</strong> {{ internship.company.company_name }}</p>
+                <p><strong>Period:</strong> {{ internship.start_date.strftime('%b %d, %Y') if internship.start_date else 'TBD' }} &rarr; {{ internship.end_date.strftime('%b %d, %Y') if internship.end_date else 'TBD' }}</p>
+                <p><strong>Hours Completed:</strong> {{ total_approved_hours }} / {{ required_hours }} verified hrs</p>
+            </div>
+        </div>
+
+        <!-- Verified Logbook Entries Table -->
+        <h3 class="report-section-title">Verified Daily Activity Register</h3>
+        <table class="report-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Date</th>
+                    <th style="width: 10%;">Hours</th>
+                    <th style="width: 45%;">Engineering Duties Performed</th>
+                    <th style="width: 30%;">Supervisor Review Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in approved_entries %}
+                <tr>
+                    <td class="col-date">{{ entry.entry_date.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ entry.hours_worked }} hrs</td>
+                    <td>{{ entry.tasks_performed }}</td>
+                    <td class="col-feedback">{{ entry.supervisor_feedback or "Approved without remarks" }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="table-empty">No verified log entries on record.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Academic Remarks -->
+        {% if internship.evaluation_notes %}
+        <div class="report-notes-card">
+            <strong class="report-notes-label">Academic Evaluation Remarks:</strong>
+            <p class="report-notes-text">{{ internship.evaluation_notes }}</p>
+        </div>
+        {% endif %}
+
+        <!-- Institutional Signatures -->
+        <div class="report-signature-grid">
+            <div>
+                <div class="report-signature-line">
+                    <strong>Host Company Supervisor Signature</strong><br>
+                    {{ internship.company.company_name }}
+                </div>
+            </div>
+            <div>
+                <div class="report-signature-line">
+                    <strong>University Academic Coordinator Signature</strong><br>
+                    Department of {{ internship.student.department or "Engineering" }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

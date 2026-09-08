@@ -809,3 +809,41 @@ def evaluate_internship(internship_id):
     db.session.commit()
     flash(f"Academic evaluation submitted: {decision} ({grade}).", "success")
     return redirect(url_for("main.logbook", internship_id=internship_id))
+
+
+@main.route("/internship/<int:internship_id>/report")
+def internship_report(internship_id):
+    if "user_id" not in session:
+        return redirect(url_for("main.login"))
+
+    user_id = session["user_id"]
+    role = session.get("role")
+    internship = Internship.query.get_or_404(internship_id)
+
+    # Authorization check
+    is_student = (role == "Student" and internship.student_id == user_id)
+    is_company = (role == "Company" and internship.company_id == user_id)
+    is_uni = (role == "University" and getattr(internship.student, "university_id", None) == user_id)
+    is_admin = (role == "Admin")
+
+    if not (is_student or is_company or is_uni or is_admin):
+        flash("You are not authorized to view this internship dossier.", "danger")
+        return redirect(url_for("main.dashboard"))
+
+    # Gather approved log entries in chronological order
+    approved_entries = LogbookEntry.query.filter_by(
+        internship_id=internship.internship_id,
+        status="Approved"
+    ).order_by(LogbookEntry.entry_date.asc()).all()
+
+    total_approved_hours = sum(entry.hours_worked for entry in approved_entries)
+    required_hours = internship.required_hours or 240.0
+
+    return render_template(
+        "internship_report.html",
+        internship=internship,
+        approved_entries=approved_entries,
+        total_approved_hours=total_approved_hours,
+        required_hours=required_hours,
+        generated_date=date.today()
+    )

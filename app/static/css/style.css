@@ -1074,3 +1074,239 @@ body {
 .btn-open-logbook:active {
     transform: scale(0.98);
 }
+
+/* ==========================================================================
+   Official Internship Dossier / Printable Report Styles
+   ========================================================================== */
+
+.report-body {
+    background-color: #F8FAFC;
+    color: #0F172A;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 2rem;
+}
+
+.report-action-bar {
+    max-width: 900px;
+    margin: 0 auto 1.5rem auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-report-back {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    border-radius: 6px;
+}
+
+.btn-report-print {
+    background: #0F172A;
+    color: #FFFFFF;
+    padding: 0.6rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.btn-report-print:hover {
+    background: #1E293B;
+}
+
+.report-page-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 3rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.report-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 2px solid #0F172A;
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.report-title-area h1 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.report-title-area p {
+    margin: 0.35rem 0 0 0;
+    color: #64748B;
+    font-size: 0.95rem;
+}
+
+.report-status-block {
+    text-align: right;
+}
+
+.report-status-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #64748B;
+}
+
+.report-status-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.report-status-val.status-approved {
+    color: #10B981;
+}
+
+.report-status-val.status-rejected {
+    color: #EF4444;
+}
+
+.report-status-val.status-pending {
+    color: #F59E0B;
+}
+
+.report-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.report-info-block h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #64748B;
+    letter-spacing: 0.05em;
+}
+
+.report-info-block p {
+    margin: 0.2rem 0;
+    font-size: 0.92rem;
+    color: #1E293B;
+}
+
+.report-section-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    color: #0F172A;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2.5rem;
+    font-size: 0.9rem;
+}
+
+.report-table th {
+    text-align: left;
+    background: #F1F5F9;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 2px solid #CBD5E1;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #475569;
+}
+
+.report-table td {
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid #E2E8F0;
+    vertical-align: top;
+}
+
+.report-table td.col-date {
+    font-weight: 600;
+}
+
+.report-table td.col-feedback {
+    color: #64748B;
+    font-style: italic;
+}
+
+.report-table td.table-empty {
+    text-align: center;
+    color: #94A3B8;
+    padding: 2rem;
+}
+
+.report-notes-card {
+    background: #F1F5F9;
+    border-left: 4px solid #0F172A;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    border-radius: 4px;
+}
+
+.report-notes-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: #475569;
+    display: block;
+    margin-bottom: 0.35rem;
+}
+
+.report-notes-text {
+    margin: 0;
+    font-size: 0.92rem;
+    color: #1E293B;
+    line-height: 1.5;
+}
+
+.report-signature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-top: 3.5rem;
+    padding-top: 2rem;
+    border-top: 1px dashed #CBD5E1;
+}
+
+.report-signature-line {
+    border-top: 1px solid #0F172A;
+    margin-top: 3rem;
+    padding-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #475569;
+    text-align: center;
+}
+
+/* Print Specific Rules */
+@media print {
+    body.report-body {
+        background: #FFFFFF;
+        padding: 0;
+    }
+
+    .report-action-bar {
+        display: none !important;
+    }
+
+    .report-page-wrapper {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+    }
+
+    .report-table tr {
+        page-break-inside: avoid;
+    }
+}

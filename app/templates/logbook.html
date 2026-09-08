@@ -16,9 +16,15 @@
                 Host: <strong style="color: #1E293B;">{{ internship.company.company_name }}</strong>
             </p>
         </div>
-        <div class="dashboard-actions">
+        <div class="dashboard-actions" style="display: flex; gap: 0.75rem; align-items: center;">
+            <a href="{{ url_for('main.internship_report', internship_id=internship.internship_id) }}" 
+            target="_blank" 
+            class="btn btn-primary" 
+            style="background: #0F172A; color: #FFFFFF; font-weight: 700; font-size: 0.85rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem;">
+                📄 EXPORT OFFICIAL REPORT
+            </a>
             <a href="{{ url_for('main.dashboard') }}" class="btn btn-secondary" style="font-weight: 600; font-size: 0.85rem; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none;">
-                &larr; BACK TO DASHBOARD
+                &larr; Back to Dashboard
             </a>
         </div>
     </div>

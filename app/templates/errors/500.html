@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-card">
+        <span class="error-code error-code-danger">500</span>
+        <h1 class="error-title">Internal Server Exception</h1>
+        <p class="error-message">
+            An unexpected error occurred while processing the request. Active database operations have been safely rolled back.
+        </p>
+        <div class="error-actions">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Return to Safety</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

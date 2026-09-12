@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-card">
+        <span class="error-code">404</span>
+        <h1 class="error-title">Page Not Found</h1>
+        <p class="error-message">
+            The resource, student record, or route you requested does not exist or has been relocated.
+        </p>
+        <div class="error-actions">
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">Return to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

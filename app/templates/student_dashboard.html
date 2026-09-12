@@ -9,7 +9,7 @@
             <h1 class="dashboard-title">Student Portal</h1>
             <p class="dashboard-subtitle">
                 Welcome, <strong>{{ student.first_name }} {{ student.last_name }}</strong> 
-                ({{ student.student_number }}) &bull; {{ student.university.university_name }}
+                ({{ student.student_number }}) &bull; {{ student.university.university_name if student.university else "Academic Institution" }}
             </p>
         </div>
         <div class="dashboard-actions">
@@ -18,41 +18,6 @@
         </div>
     </div>
 
-    <!-- Offers Received Waiting Area (Appears when student has pending offers) -->
-    {% if offers and not active_internship %}
-        <div class="dashboard-card margin-bottom-lg" style="border-left: 5px solid #e9c46a;">
-            <h3 class="card-header-line">Placement Offers Received ({{ offers|length }})</h3>
-            <p class="text-subtle" style="margin-top: -0.5rem; margin-bottom: 1.25rem;">
-                You have received the following placement offers. Review the term dates and select the opportunity you wish to accept.
-            </p>
-
-            <div style="display: grid; gap: 1rem;">
-                {% for offer in offers %}
-                    <div style="background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                        <div>
-                            <h4 style="margin: 0; color: #0d1b2a; font-size: 1.15rem;">{{ offer.position }}</h4>
-                            <p style="margin: 0.35rem 0 0 0; color: #415a77;">
-                                Organization: <strong>{{ offer.company.company_name }}</strong> &bull; Location: {{ offer.listing.location if offer.listing else "On-site" }}
-                            </p>
-                            <p class="text-subtle" style="margin: 0.35rem 0 0 0; font-size: 0.88rem;">
-                                Term Duration: 
-                                <strong>{{ offer.listing.start_date.strftime('%b %d, %Y') }}</strong> &rarr; 
-                                <strong>{{ offer.listing.end_date.strftime('%b %d, %Y') }}</strong> 
-                                &bull; Requirement: <strong>{{ offer.listing.required_hours }} Hours</strong>
-                            </p>
-                        </div>
-                        <div>
-                            <form method="POST" action="{{ url_for('main.accept_offer', app_id=offer.application_id) }}" style="margin: 0;">
-                                <button type="submit" class="btn btn-primary" onclick="return confirm('Accept this offer from {{ offer.company.company_name }}? Accepting this placement will withdraw other pending applications.');">
-                                    Accept Offer &amp; Start Placement &rarr;
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    {% endif %}
     <!-- Active Internship Callout Card -->
     {% if active_internship %}
         <div class="placement-banner-card">
@@ -67,7 +32,7 @@
 
                 <div class="placement-meta-row">
                     <div class="placement-meta-item">
-                        <span style="color: #64748B;">Duration:</span> 
+                        <span class="meta-label">Duration:</span> 
                         <strong>
                             {{ active_internship.start_date.strftime('%b %d, %Y') if active_internship.start_date else 'TBD' }} 
                             &rarr; 
@@ -76,13 +41,13 @@
                     </div>
 
                     <div class="placement-meta-item">
-                        <span style="color: #64748B;">Target Requirement:</span> 
+                        <span class="meta-label">Target Requirement:</span> 
                         <strong>{{ active_internship.required_hours or 240 }} Hours</strong>
                     </div>
 
                     {% if active_internship.grade %}
                         <div class="placement-meta-item">
-                            <span style="color: #64748B;">Grade:</span> 
+                            <span class="meta-label">Academic Grade:</span> 
                             <strong>{{ active_internship.grade }}</strong>
                         </div>
                     {% endif %}
@@ -91,13 +56,57 @@
 
             <!-- Right Column: Status Badge & Action Button -->
             <div class="placement-banner-action">
-                <span class="status-badge {% if active_internship.status == 'Approved' %}status-badge-accepted{% elif active_internship.status in ['Ongoing', 'Scheduled'] %}status-badge-pending{% else %}status-badge-muted{% endif %}" style="font-size: 0.8rem; font-weight: 700; padding: 0.35rem 0.85rem; border-radius: 9999px;">
+                <span class="status-badge {% if active_internship.status == 'Approved' %}status-badge-accepted{% elif active_internship.status in ['Ongoing', 'Scheduled'] %}status-badge-pending{% else %}status-badge-muted{% endif %}">
                     ● {{ active_internship.status }}
                 </span>
                 <a href="{{ url_for('main.logbook', internship_id=active_internship.internship_id) }}" class="btn-open-logbook">
                     OPEN DAILY LOGBOOK &rarr;
                 </a>
             </div>
+        </div>
+
+    <!-- Offers Received Waiting Area (Appears when student has pending offers but no active placement) -->
+    {% elif offers %}
+        <div class="dashboard-card margin-bottom-lg" style="border-left: 5px solid #E9C46A;">
+            <h3 class="card-header-line">Placement Offers Received ({{ offers|length }})</h3>
+            <p class="text-subtle" style="margin-top: -0.5rem; margin-bottom: 1.25rem;">
+                You have received the following placement offers. Review the term dates and select the opportunity you wish to accept.
+            </p>
+
+            <div style="display: grid; gap: 1rem;">
+                {% for offer in offers %}
+                    <div style="background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div>
+                            <h4 style="margin: 0; color: #0F172A; font-size: 1.15rem;">{{ offer.position }}</h4>
+                            <p style="margin: 0.35rem 0 0 0; color: #475569;">
+                                Organization: <strong>{{ offer.company.company_name }}</strong> &bull; Location: {{ offer.listing.location if offer.listing else "On-site" }}
+                            </p>
+                            <p class="text-subtle" style="margin: 0.35rem 0 0 0; font-size: 0.88rem;">
+                                Term Duration: 
+                                <strong>{{ offer.listing.start_date.strftime('%b %d, %Y') if offer.listing.start_date else 'TBD' }}</strong> &rarr; 
+                                <strong>{{ offer.listing.end_date.strftime('%b %d, %Y') if offer.listing.end_date else 'TBD' }}</strong> 
+                                &bull; Requirement: <strong>{{ offer.listing.required_hours or 240 }} Hours</strong>
+                            </p>
+                        </div>
+                        <div>
+                            <form method="POST" action="{{ url_for('main.accept_offer', app_id=offer.application_id) }}" style="margin: 0;">
+                                <button type="submit" class="btn btn-primary" onclick="return confirm('Accept this offer from {{ offer.company.company_name }}? Accepting this placement will withdraw other pending applications.');">
+                                    Accept Offer &amp; Start Placement &rarr;
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    <!-- Empty State: No Placement and No Pending Offers -->
+    {% else %}
+        <div class="empty-state-card">
+            <span class="empty-state-icon">📋</span>
+            <h3>No Active Placement Assigned</h3>
+            <p>You currently do not have an ongoing internship placement or pending offer. Browse available institutional listings to apply for an opening.</p>
+            <a href="{{ url_for('main.browse_internships') }}" class="btn btn-primary">Browse Available Placements</a>
         </div>
     {% endif %}
 
@@ -161,7 +170,7 @@
                         <td>
                             {% if app.status == 'Offered' and not active_internship %}
                                 <form method="POST" action="{{ url_for('main.accept_offer', app_id=app.application_id) }}" style="display:inline; margin:0;">
-                                    <button type="submit" class="btn-decision btn-accept" style="cursor:pointer;" onclick="return confirm('Accept this offer and begin placement?');">
+                                    <button type="submit" class="btn-decision btn-accept" onclick="return confirm('Accept this offer and begin placement?');">
                                         Accept Offer
                                     </button>
                                 </form>
@@ -170,14 +179,14 @@
                                     View Logbook &rarr;
                                 </a>
                             {% else %}
-                                <span class="text-subtle" style="font-size: 0.85rem;">—</span>
+                                <span class="text-subtle">—</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="5" class="table-empty-cell">
-                            You have not applied for any internships yet. Click "Browse Internships" to find an opening!
+                        <td colspan="5" class="table-empty-cell" style="padding: 2.5rem; text-align: center; color: #64748B;">
+                            You have not applied for any internships yet. Click <strong>"Browse Internships"</strong> to explore open opportunities.
                         </td>
                     </tr>
                     {% endfor %}

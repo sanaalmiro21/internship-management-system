@@ -1310,3 +1310,133 @@ body {
         page-break-inside: avoid;
     }
 }
+
+/* ==========================================================================
+   Day 19: Error Pages, Flash Alerts & Empty State Scaffolding
+   ========================================================================== */
+
+/* Error Layout */
+.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    padding: 2rem;
+}
+
+.error-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 3rem;
+    max-width: 520px;
+    text-align: center;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.error-code {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #475569;
+    letter-spacing: -0.05em;
+    display: block;
+    line-height: 1;
+    margin-bottom: 0.75rem;
+}
+
+.error-code-danger {
+    color: #EF4444;
+}
+
+.error-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0F172A;
+    margin: 0 0 0.75rem 0;
+}
+
+.error-message {
+    font-size: 0.95rem;
+    color: #64748B;
+    line-height: 1.5;
+    margin: 0 0 1.75rem 0;
+}
+
+.error-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+/* Flash Alerts */
+.alert-container {
+    max-width: 1200px;
+    margin: 1rem auto;
+    padding: 0 1rem;
+}
+
+.alert {
+    padding: 0.85rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid transparent;
+}
+
+.alert-success {
+    background-color: #ECFDF5;
+    color: #065F46;
+    border-color: #A7F3D0;
+}
+
+.alert-danger {
+    background-color: #FEF2F2;
+    color: #991B1B;
+    border-color: #FECACA;
+}
+
+.alert-warning {
+    background-color: #FFFBEB;
+    color: #92400E;
+    border-color: #FDE68A;
+}
+
+.alert-info {
+    background-color: #EFF6FF;
+    color: #1E40AF;
+    border-color: #BFDBFE;
+}
+
+/* Empty States */
+.empty-state-card {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    background: #FFFFFF;
+    border: 1px dashed #CBD5E1;
+    border-radius: 12px;
+    margin: 1.5rem 0;
+}
+
+.empty-state-icon {
+    font-size: 2.2rem;
+    display: block;
+    margin-bottom: 0.75rem;
+}
+
+.empty-state-card h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1E293B;
+    margin: 0 0 0.35rem 0;
+}
+
+.empty-state-card p {
+    font-size: 0.9rem;
+    color: #64748B;
+    max-width: 420px;
+    margin: 0 auto 1.25rem auto;
+}

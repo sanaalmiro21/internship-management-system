@@ -7,6 +7,8 @@ from .services import Student, db, register_user, authenticate_user
 from datetime import datetime, timezone, date, timedelta
 from . import db
 from .models import Application, Company, Internship, InternshipListing, University, User, Document, LogbookEntry
+from functools import wraps
+from flask import abort, flash, redirect, session, url_for
 ALLOWED_EXTENSIONS = {"pdf", "docx", "doc"}
 
 main = Blueprint("main", __name__)
@@ -585,92 +587,98 @@ SUBMISSION_GRACE_PERIOD_DAYS = 14
 
 
 # 1. VIEW LOGBOOK & HANDLE STUDENT DAILY SUBMISSIONS
+# Ensure login_required decorator exists (or use your session check directly)
 @main.route("/internship/<int:internship_id>/logbook", methods=["GET", "POST"])
 def logbook(internship_id):
     if "user_id" not in session:
+        flash("Please log in to access the logbook.", "warning")
         return redirect(url_for("main.login"))
 
     user_id = session["user_id"]
     role = session.get("role")
     internship = Internship.query.get_or_404(internship_id)
 
-    # Permission check: Student owner, Company host, University coordinator, or Admin
+    # --- Strict RBAC & Tenant Ownership Checks ---
+    student_uni_id = getattr(internship.student, "university_id", None) if internship.student else None
+
     is_student = (role == "Student" and internship.student_id == user_id)
     is_company = (role == "Company" and internship.company_id == user_id)
-    is_uni = (role == "University" and internship.student.university_id == user_id)
+    is_uni = (role == "University" and student_uni_id == user_id)
     is_admin = (role == "Admin")
 
     if not (is_student or is_company or is_uni or is_admin):
-        flash("You are not authorized to view this internship logbook.", "danger")
+        flash("Access Denied: You are not authorized to view or access this logbook.", "danger")
         return redirect(url_for("main.dashboard"))
 
+    # Submission grace window calculation
     grace_deadline = internship.end_date + timedelta(days=SUBMISSION_GRACE_PERIOD_DAYS)
     is_submission_window_open = (date.today() <= grace_deadline)
 
-    # --- Student Submission (Daily or Retroactive) ---
+    # --- POST: Student Submission (Daily or Revision Update) ---
     if request.method == "POST":
         if not is_student:
-            flash("Only the enrolled student can submit daily logs.", "danger")
+            flash("Security Violation: Only the assigned student can submit daily logs.", "danger")
             return redirect(url_for("main.logbook", internship_id=internship_id))
 
         if internship.status != "Ongoing":
-            flash(f"Cannot submit entries: Internship status is '{internship.status}'.", "warning")
+            flash(f"Submission Locked: Internship status is currently '{internship.status}'.", "warning")
             return redirect(url_for("main.logbook", internship_id=internship_id))
 
         if not is_submission_window_open:
-            flash(f"The submission grace period expired on {grace_deadline.strftime('%b %d, %Y')}. Logbook is locked.", "danger")
+            flash(f"The submission grace period expired on {grace_deadline.strftime('%b %d, %Y')}. Logbook is permanently locked.", "danger")
             return redirect(url_for("main.logbook", internship_id=internship_id))
 
         raw_date = request.form.get("entry_date")
-        raw_hours = request.form.get("hours_worked", 8.0)
-        tasks = request.form.get("tasks_performed", "").strip()
-        learnings = request.form.get("learnings", "").strip()
+        raw_hours = request.form.get("hours_worked", "8.0")
+        tasks = (request.form.get("tasks_performed") or "").strip()
+        learnings = (request.form.get("learnings") or "").strip()
 
+        # Input Parsing Validation
         try:
             entry_date = datetime.strptime(raw_date, "%Y-%m-%d").date()
             hours_worked = float(raw_hours)
         except (ValueError, TypeError):
-            flash("Invalid date or hours format provided.", "danger")
+            flash("Invalid submission: Please provide a valid calendar date and numerical hours.", "danger")
             return redirect(url_for("main.logbook", internship_id=internship_id))
 
-        # Date validations
+        # Date & Hours Boundaries
         if entry_date < internship.start_date:
-            flash(f"Work date cannot precede the internship start date ({internship.start_date}).", "danger")
+            flash(f"Invalid Date: Work cannot precede the placement start date ({internship.start_date.strftime('%b %d, %Y')}).", "danger")
             return redirect(url_for("main.logbook", internship_id=internship_id))
 
         if entry_date > internship.end_date:
-            flash(f"Work date cannot exceed the official placement end date ({internship.end_date}).", "danger")
+            flash(f"Invalid Date: Work cannot exceed the placement end date ({internship.end_date.strftime('%b %d, %Y')}).", "danger")
             return redirect(url_for("main.logbook", internship_id=internship_id))
 
         if entry_date > date.today():
-            flash("You cannot log work for future calendar dates.", "danger")
+            flash("Integrity Guard: You cannot log hours for future calendar dates.", "danger")
             return redirect(url_for("main.logbook", internship_id=internship_id))
 
-        if hours_worked <= 0 or hours_worked > 12:
-            flash("Logged work hours per day must be between 0.5 and 12.0.", "danger")
+        if hours_worked < 0.5 or hours_worked > 12.0:
+            flash("Invalid Hours: Daily logged work must be between 0.5 and 12.0 hours.", "danger")
             return redirect(url_for("main.logbook", internship_id=internship_id))
 
-        # Check for existing entry on this date
+        # Check for existing entry on the target date
         existing_entry = LogbookEntry.query.filter_by(
             internship_id=internship.internship_id,
             entry_date=entry_date
         ).first()
 
         if existing_entry:
-            # If flagged by supervisor for revision, allow in-place edit & reset to Pending
+            # Only allow edit if supervisor explicitly requested revisions
             if existing_entry.status == "Needs Revision":
                 existing_entry.hours_worked = hours_worked
                 existing_entry.tasks_performed = tasks
                 existing_entry.learnings = learnings if learnings else None
                 existing_entry.status = "Pending"
                 db.session.commit()
-                flash(f"Entry for {entry_date} revised and resubmitted for supervisor approval.", "success")
+                flash(f"Log entry for {entry_date.strftime('%b %d, %Y')} successfully revised and resubmitted.", "success")
                 return redirect(url_for("main.logbook", internship_id=internship_id))
             else:
-                flash(f"An entry for {entry_date} already exists (Status: {existing_entry.status}).", "warning")
+                flash(f"Duplicate Entry Blocked: An entry for {entry_date.strftime('%b %d, %Y')} already exists (Status: {existing_entry.status}).", "warning")
                 return redirect(url_for("main.logbook", internship_id=internship_id))
 
-        # Create new logbook entry
+        # Create fresh entry
         new_entry = LogbookEntry(
             internship_id=internship.internship_id,
             entry_date=entry_date,
@@ -681,15 +689,18 @@ def logbook(internship_id):
         )
         db.session.add(new_entry)
         db.session.commit()
-        flash(f"Work entry for {entry_date} logged successfully.", "success")
+        flash(f"Work entry for {entry_date.strftime('%b %d, %Y')} logged successfully.", "success")
         return redirect(url_for("main.logbook", internship_id=internship_id))
 
-    # --- GET Display ---
-    entries = LogbookEntry.query.filter_by(internship_id=internship_id).order_by(LogbookEntry.entry_date.desc()).all()
-    approved_hours = sum(e.hours_worked for e in entries if e.status == "Approved")
-    progress_pct = min(100, int((approved_hours / internship.required_hours) * 100)) if internship.required_hours else 0
+    # --- GET: Logbook Display ---
+    entries = LogbookEntry.query.filter_by(
+        internship_id=internship_id
+    ).order_by(LogbookEntry.entry_date.desc()).all()
 
-    # Max date selectable in the calendar input: min(today, end_date)
+    approved_hours = sum(e.hours_worked for e in entries if e.status == "Approved")
+    req_hours = internship.required_hours or 240.0
+    progress_pct = min(100, int((approved_hours / req_hours) * 100)) if req_hours else 0
+
     max_selectable_date = min(date.today(), internship.end_date).isoformat()
 
     return render_template(
@@ -705,39 +716,74 @@ def logbook(internship_id):
     )
 
 # 2. COMPANY SUPERVISOR: APPROVE / REQUEST REVISION ON AN ENTRY
+
+
 @main.route("/logbook/entry/<int:entry_id>/review", methods=["POST"])
 def review_logbook_entry(entry_id):
-    if "user_id" not in session or session.get("role") not in ["Company", "Admin"]:
-        flash("Unauthorized action.", "danger")
+    if "user_id" not in session:
+        flash("Session expired. Please log in to continue.", "warning")
+        return redirect(url_for("main.login"))
+
+    role = session.get("role")
+    user_id = session.get("user_id")
+
+    if role not in ["Company", "Admin"]:
+        flash("Unauthorized action: Only company supervisors and administrators can review log entries.", "danger")
         return redirect(url_for("main.dashboard"))
 
     entry = LogbookEntry.query.get_or_404(entry_id)
 
-    # Verify company ownership
-    if session.get("role") != "Admin" and entry.internship.company_id != session.get("user_id"):
-        flash("You are not authorized to review entries for this candidate.", "danger")
+    # 1. Defensive Relationship Guard
+    if not entry.internship:
+        flash("Data Integrity Error: Entry is not associated with a valid internship record.", "danger")
         return redirect(url_for("main.dashboard"))
 
-    # GUARD: Lock approved entries permanently from further review actions
+    # 2. Strict Multi-Tenant Isolation (Anti-IDOR)
+    if role != "Admin" and entry.internship.company_id != user_id:
+        flash("Security Violation: You are not authorized to evaluate records for other companies.", "danger")
+        return redirect(url_for("main.dashboard"))
+
+    # 3. Guard against reviewing terminated/cancelled placements
+    if entry.internship.status in ["Terminated", "Cancelled"]:
+        flash(f"Action Blocked: This internship is marked as '{entry.internship.status}'.", "warning")
+        return redirect(url_for("main.logbook", internship_id=entry.internship_id))
+
+    # 4. Immutable Lock: Once Approved, cannot be modified or reverted
     if entry.status == "Approved":
-        flash(f"Entry for {entry.entry_date} is already approved and locked against further revisions.", "warning")
+        flash(f"Integrity Guard: The entry for {entry.entry_date.strftime('%b %d, %Y')} is already approved and locked.", "warning")
         return redirect(url_for("main.logbook", internship_id=entry.internship_id))
 
     status = request.form.get("status")
-    feedback = request.form.get("feedback", "").strip()
+    feedback = (request.form.get("feedback") or "").strip()
 
+    # 5. Status Validation Whitelist
     if status not in ["Approved", "Needs Revision"]:
-        flash("Invalid review decision status.", "danger")
+        flash("Invalid review decision status provided.", "danger")
         return redirect(url_for("main.logbook", internship_id=entry.internship_id))
 
+    # 6. Requirement: Feedback is mandatory when requesting revisions
+    if status == "Needs Revision" and not feedback:
+        flash("Action Required: Please provide guidance notes explaining why revision is requested.", "danger")
+        return redirect(url_for("main.logbook", internship_id=entry.internship_id))
+
+    # 7. Sanitize length
+    if len(feedback) > 1000:
+        feedback = feedback[:1000]
+
+    # Apply updates
     entry.status = status
     entry.supervisor_feedback = feedback if feedback else None
-    entry.reviewed_at = datetime.now(timezone.utc)
+    
+    # Timezone-aware timestamp
+    try:
+        entry.reviewed_at = datetime.now(timezone.utc)
+    except AttributeError:
+        entry.reviewed_at = datetime.utcnow()
+
     db.session.commit()
 
-    flash(f"Entry for {entry.entry_date} marked as '{status}'.", "success")
+    flash(f"Entry for {entry.entry_date.strftime('%b %d, %Y')} marked as '{status}'.", "success")
     return redirect(url_for("main.logbook", internship_id=entry.internship_id))
-
 # 3. STUDENT: SUBMIT INTERNSHIP TO UNIVERSITY FOR FINAL EVALUATION
 @main.route("/internship/<int:internship_id>/submit-final", methods=["POST"])
 def submit_final_internship(internship_id):
@@ -847,3 +893,26 @@ def internship_report(internship_id):
         required_hours=required_hours,
         generated_date=date.today()
     )
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Session expired. Please log in to continue.", "warning")
+            return redirect(url_for("main.login"))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def roles_required(*allowed_roles):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if "user_id" not in session:
+                return redirect(url_for("main.login"))
+            user_role = session.get("role")
+            if user_role not in allowed_roles:
+                flash("Access denied: Insufficient institutional privileges.", "danger")
+                return redirect(url_for("main.dashboard"))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
